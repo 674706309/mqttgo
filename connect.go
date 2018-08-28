@@ -34,9 +34,9 @@ type Connect struct {
 func init() {
 	ClientIDRegexp = regexp.MustCompile("^[0-9a-zA-Z _]*$")
 }
-func NewConnect() (msg *Connect) {
-	msg.Header.SetType(TYPE_CONNECT)
-	msg.Header.SetFlag(TYPE_FLAG_CONNECT)
+func NewConnect() (c *Connect) {
+	c.Header.SetType(TYPE_CONNECT)
+	c.Header.SetFlag(TYPE_FLAG_CONNECT)
 	//msg.SetProtocolName(bytes.Join([][]byte{{0x00, 0x04}, []byte(PROTOCOL)}, []byte("")))
 	//msg.SetProtocolLevel(PROTOCOL_LEVEL)
 	return

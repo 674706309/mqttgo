@@ -99,3 +99,14 @@ func ValidQos(qos byte) bool {
 var SupportedVersions = map[byte]string{
 	0x4: "MQTT",
 }
+
+const (
+	CONNBAK_RETURN_CODE_OK             uint8 = iota //连接已接受 连接已被服务端接受
+	CONNBAK_RETURN_NO_SUPPORT_PROTOCOL              //连接已拒绝，不支持的协议版本 服务端不支持客户端请求的 MQTT 协议级别
+	CONNBAK_RETURN_NO_CLIENT_ID                     //连接已拒绝，不合格的客户端标识符 客户端标识符是正确的 UTF-8 编码，但服务端不允许使用
+	CONNBAK_RETURN_NO_SERVER                        //连接已拒绝，服务端不可用 网络连接已建立，但 MQTT 服务不可用
+	CONNBAK_RETURN_ERROR_UNAME_PWD                  //连接已拒绝，无效的用户名或密码 用户名或密码的数据格式无效
+	CONNBAK_RETURN_UNAUTHORIZED                     // 连接已拒绝，未授权 客户端未被授权连接到此服务器
+	CONNBAK_RETURN_RESERVED                         // 连接已拒绝，保留码 6-255
+
+)

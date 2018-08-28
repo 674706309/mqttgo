@@ -2,70 +2,82 @@ package mqtt
 
 import "fmt"
 
-type Connbak struct {
+type Connack struct {
 	//固定头
-	FixedHeader
+	Header FixedHeader
 	//可变头
-	ConnectAcknowledgeFlags bool
-	SessionPresent          bool  //当前会话标志
-	ConnectReturncode       uint8 //返回码
+	ConnectAcknowledgeFlags uint8
+	ConnectReturnCode       uint8 //返回码
 }
 
-const (
-	CONNBAK_RETURN_CODE_OK             uint8 = iota //连接已接受 连接已被服务端接受
-	CONNBAK_RETURN_NO_SUPPORT_PROTOCOL              //连接已拒绝，不支持的协议版本 服务端不支持客户端请求的 MQTT 协议级别
-	CONNBAK_RETURN_NO_CLIENT_ID                     //连接已拒绝，不合格的客户端标识符 客户端标识符是正确的 UTF-8 编码，但服务端不允许使用
-	CONNBAK_RETURN_NO_SERVER                        //连接已拒绝，服务端不可用 网络连接已建立，但 MQTT 服务不可用
-	CONNBAK_RETURN_ERROR_UNAME_PWD                  //连接已拒绝，无效的用户名或密码 用户名或密码的数据格式无效
-	CONNBAK_RETURN_UNAUTHORIZED                     // 连接已拒绝，未授权 客户端未被授权连接到此服务器
-	CONNBAK_RETURN_RESERVED                         // 连接已拒绝，保留码 6-255
-
-)
-
-func NewConnack() (msg *Connect) {
-	msg.TypeAndFlag = byte(TYPE_FLAG_CONNACK)
-	msg.SetRemainingLength(2)
+func NewConnack() (c *Connack) {
+	c.Header.SetType(TYPE_FLAG_CONNECT)
+	c.Header.SetFlag(TYPE_FLAG_CONNACK)
+	c.Header.SetRemainingLength(2)
 	return
 }
-
-//设置当前会话标志
-func (c *Connbak) SetSessionPresent(sessionPresent bool) {
-	c.SessionPresent = sessionPresent
-}
-
-//获取当前会话标志
-func (c *Connbak) GetSessionPresent() bool {
-	return c.SessionPresent
-}
-func (c *Connbak) SetReturnCode(code uint8) {
-	c.ConnectReturncode = code
-}
-func (c *Connbak) GetReturnCode() uint8 {
-	return c.ConnectReturncode
-}
-func (c *Connbak) decode(header byte, msg []byte) error {
-
-	if header != TYPE_FLAG_CONNACK {
-		return fmt.Errorf("CONNACK固定头信息保留位错误:%v", header)
+func (c *Connack) SetSessionPresent(v bool) {
+	if v {
+		c.ConnectAcknowledgeFlags |= 0x1 // 00000001
+	} else {
+		c.ConnectAcknowledgeFlags &= 254 // 11111110
 	}
-
-	c.RemainingLength = 2
-	if (msg[0] | 1) != 1 {
-		return fmt.Errorf("CONNACK连接确认标志错误:收到%d 应收到0或1", msg[0])
-	}
-	c.SessionPresent = msg[0] == 1
-	c.ConnectReturncode = uint8(msg[1])
-	return nil
 }
-func (c *Connbak) encode() []byte {
-	//固定报头
-	data := make([]byte, 4, 4)
-	data[0] = c.TypeAndFlag
-	data[1] = byte(0x2)
-	if c.SessionPresent {
-		data[2] = 0x1
+func (c *Connack) GetSessionPresent() bool {
+	return (c.ConnectAcknowledgeFlags & 0x1) == 1
+}
+
+func (c *Connack) SetReturnCode(code uint8) {
+	c.ConnectReturnCode = code
+}
+func (c *Connack) GetReturnCode() uint8 {
+	return c.ConnectReturnCode
+}
+func (c *Connack) GetLength() int {
+	return 2
+}
+func (c Connack) String() string {
+	return fmt.Sprintf("%s, SessionPresent=%t, ReturnCode=%q\n", c.Header, c.GetSessionPresent(), c.GetReturnCode())
+}
+func (c *Connack) encode(dst []byte) (int, error) {
+	hl := c.Header.getLength()
+	ml := c.GetLength()
+	c.Header.SetRemainingLength(uint64(ml))
+	total := 0
+	n, err := c.Header.encode(dst[total:])
+	total += n
+	if err != nil {
+		return 0, err
 	}
-	data[3] = c.ConnectReturncode
-	c.RemainingLength = 2
-	return data
+	if c.GetSessionPresent() {
+		dst[total] = 1
+	}
+	total++
+	if c.ConnectReturnCode > 5 {
+		return total, fmt.Errorf("connack/Encode: Invalid CONNACK return code (%d)", c.ConnectReturnCode)
+	}
+	dst[total] = c.ConnectReturnCode
+	total++
+	return total, nil
+}
+func (c *Connack) Decode(src []byte) (int, error) {
+	total := 0
+	n, err := c.Header.decode(src)
+	total += n
+	if err != nil {
+		return total, err
+	}
+	b := src[total]
+	if b&254 != 0 {
+		return 0, fmt.Errorf("connack/Decode: Bits 7-1 in Connack Acknowledge Flags byte (1) are not 0")
+	}
+	c.SetSessionPresent(b&0x1 == 1)
+	total++
+	b = src[total]
+	if b > 5 {
+		return 0, fmt.Errorf("connack/Decode: Invalid CONNACK return code (%d)", b)
+	}
+	c.SetReturnCode(b)
+	total++
+	return total, nil
 }
