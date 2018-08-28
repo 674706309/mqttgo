@@ -1,0 +1,82 @@
+syntax = "proto3"; //protobuf3协议
+package mqtt;
+
+message header {
+    uint32 TypeAndFlag = 1;
+    uint64 RemainingLength = 2;
+}
+message Connect {
+    //固定头
+    repeated header head = 1;
+    //可变头
+    uint32 ProtocolName = 2; //协议
+    uint32 ProtocolLevel = 3; //协议级别
+    uint32 ConnectFlags = 4; //连接标志
+    uint32 KeepAlive = 5; //保持时间单位秒
+    bool CleanSession = 6; //清理会话
+    bool WillFlag = 7; //遗嘱标志
+    bool bytesQoSWillQoS = 8; //遗嘱服务质量等级
+    bool WillRetain = 9; //遗嘱保留标志
+    bool UserNameFlag = 10; //用户名标志
+    bool PasswordFlag = 11; //密码标志
+    //有效载荷
+    bytes ClientIdentifier = 12; //客户端标识符
+    bytes WillTopic = 13; //遗嘱主题
+    bytes WillMessage = 14; //遗嘱消息
+    bytes UserName = 15; //用户名
+    bytes Password = 16; //密码
+}
+message Connbak {
+    //固定头
+    repeated header head = 1;
+    //可变头
+    bool ConnectAcknowledgeFlags = 2;
+    bool SessionPresent = 3; //当前会话标志
+    uint32 ConnectReturncode = 4; //返回码
+}
+message Publish {
+    //固定头
+    repeated header head = 1;
+    //可变头
+    bytes TopicName = 2; //主题名
+    uint32 PacketIdentifier = 3; //报文标识符
+    //有效载荷
+    bytes Payload = 4;
+}
+message Puback {
+    //固定头
+    repeated header head = 1;
+    //可变头
+    uint32 PacketIdentifier = 2; //报文标识符
+}
+message Pubrec {
+    //固定头
+    repeated header head = 1;
+    //可变头
+    uint32 PacketIdentifier = 2; //报文标识符
+}
+message Pubrel {
+    //固定头
+    repeated header head = 1;
+    //可变头
+    uint32 PacketIdentifier = 2; //报文标识符
+}
+message Pubcomp {
+    //固定头
+    repeated header head = 1;
+    //可变头
+    uint32 PacketIdentifier = 2; //报文标识符
+}
+message Subscribe {
+    //固定头
+    repeated header head = 1;
+    //可变头
+    uint32 PacketIdentifier = 2; //报文标识符
+}
+message Suback {
+    //固定头
+    repeated header head = 1;
+    //可变头
+    uint32 PacketIdentifier = 2; //报文标识符
+    uint32 ConnectReturncode = 3; //返回码
+}
