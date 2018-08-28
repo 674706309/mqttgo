@@ -11,7 +11,7 @@ type Puback struct {
 }
 
 func NewPuback() (p *Puback) {
-	p.Header.SetType(TYPE_PUBLISH)
+	p.Header.SetType(TYPE_PUBACK)
 	p.Header.SetFlag(TYPE_FLAG_PUBACK)
 	p.Header.SetRemainingLength(2)
 	return
