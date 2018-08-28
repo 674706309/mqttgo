@@ -10,7 +10,7 @@ type Pubrel struct {
 	Header Header
 }
 
-func NewPubrel() (p *Pubrec) {
+func NewPubrel() (p *Pubrel) {
 	p.Header.SetType(TYPE_PUBREL)
 	p.Header.SetFlag(TYPE_FLAG_PUBREL)
 	p.Header.SetRemainingLength(2)
