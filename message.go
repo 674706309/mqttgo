@@ -1,6 +1,9 @@
 package mqtt
 
-import "math"
+import (
+	"bytes"
+	"math"
+)
 
 const (
 	MaxRemainingLength int32  = math.MaxInt32 // 剩余字段最大长度
@@ -110,3 +113,7 @@ const (
 	CONNBAK_RETURN_RESERVED                         // 连接已拒绝，保留码 6-255
 
 )
+
+func ValidTopicName(topic []byte) bool {
+	return len(topic) > 0 && bytes.IndexByte(topic, '#') == -1 && bytes.IndexByte(topic, '+') == -1
+}

@@ -41,6 +41,20 @@ func NewConnect() (c *Connect) {
 	//msg.SetProtocolLevel(PROTOCOL_LEVEL)
 	return
 }
+func (c *Connect) String() string {
+	return fmt.Sprintf("%s, ProtocolName=%q, ProtocolLevel=%d, ConnectFlags=%08b, KeepAlive=%d, ClientID=%q, WillTopic=%q, WillMessage=%q, UserName=%q, Password=%q",
+		c.Header,
+		c.GetProtocolName(),
+		c.GetProtocolLevel(),
+		c.GetConnectFlags(),
+		c.GetKeepAlive(),
+		c.GetClientID(),
+		c.GetWillTopic(),
+		c.GetWillMessage(),
+		c.GetUserName(),
+		c.GetPassword(),
+	)
+}
 func (c *Connect) SetProtocolName(t []byte) {
 	c.ProtocolName = t
 }
@@ -177,20 +191,6 @@ func (c *Connect) GetLength() int {
 		total += 2 + len(c.GetPassword())
 	}
 	return total
-}
-func (c *Connect) String() string {
-	return fmt.Sprintf("%s, ProtocolName=%q, ProtocolLevel=%d, ConnectFlags=%08b, KeepAlive=%d, ClientID=%q, WillTopic=%q, WillMessage=%q, UserName=%q, Password=%q",
-		c.Header,
-		c.GetProtocolName(),
-		c.GetProtocolLevel(),
-		c.GetConnectFlags(),
-		c.GetKeepAlive(),
-		c.GetClientID(),
-		c.GetWillTopic(),
-		c.GetWillMessage(),
-		c.GetUserName(),
-		c.GetPassword(),
-	)
 }
 func (c *Connect) encode(dst []byte) (int, error) {
 	if t := c.Header.GetType(); t != TYPE_CONNECT {

@@ -16,6 +16,9 @@ func NewConnack() (c *Connack) {
 	c.Header.SetRemainingLength(2)
 	return
 }
+func (c Connack) String() string {
+	return fmt.Sprintf("%s, SessionPresent=%t, ReturnCode=%q\n", c.Header, c.GetSessionPresent(), c.GetReturnCode())
+}
 func (c *Connack) SetSessionPresent(v bool) {
 	if v {
 		c.ConnectAcknowledgeFlags |= 0x1 // 00000001
@@ -23,10 +26,10 @@ func (c *Connack) SetSessionPresent(v bool) {
 		c.ConnectAcknowledgeFlags &= 254 // 11111110
 	}
 }
+
 func (c *Connack) GetSessionPresent() bool {
 	return (c.ConnectAcknowledgeFlags & 0x1) == 1
 }
-
 func (c *Connack) SetReturnCode(code uint8) {
 	c.ConnectReturnCode = code
 }
@@ -36,11 +39,7 @@ func (c *Connack) GetReturnCode() uint8 {
 func (c *Connack) GetLength() int {
 	return 2
 }
-func (c Connack) String() string {
-	return fmt.Sprintf("%s, SessionPresent=%t, ReturnCode=%q\n", c.Header, c.GetSessionPresent(), c.GetReturnCode())
-}
 func (c *Connack) encode(dst []byte) (int, error) {
-	hl := c.Header.getLength()
 	ml := c.GetLength()
 	c.Header.SetRemainingLength(uint64(ml))
 	total := 0
@@ -60,7 +59,7 @@ func (c *Connack) encode(dst []byte) (int, error) {
 	total++
 	return total, nil
 }
-func (c *Connack) Decode(src []byte) (int, error) {
+func (c *Connack) decode(src []byte) (int, error) {
 	total := 0
 	n, err := c.Header.decode(src)
 	total += n
