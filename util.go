@@ -1,39 +1,35 @@
 package mqtt
 
-const (
-	TYPE_RESERVED uint8 = iota
-	TYPE_CONNECT
-	TYPE_CONNACK
-	TYPE_PUBLISH
-	TYPE_PUBACK
-	TYPE_PUBREC
-	TYPE_PUBREL
-	TYPE_PUBCOMP
-	TYPE_SUBSCRIBE
-	TYPE_SUBACK
-	TYPE_UNSUBSCRIBE
-	TYPE_UNSUBACK
-	TYPE_PINGREQ
-	TYPE_PINGRESP
-	TYPE_DISCONNECT
-	TYPE_RESERVED2
+import (
+	"encoding/binary"
+	"fmt"
 )
-const (
-	TYPE_FLAG_CONNECT     uint8 = TYPE_CONNECT << 4
-	TYPE_FLAG_CONNACK     uint8 = TYPE_CONNACK << 4
-	TYPE_FLAG_PUBACK      uint8 = TYPE_PUBACK << 4
-	TYPE_FLAG_PUBREC      uint8 = TYPE_PUBREC << 4
-	TYPE_FLAG_PUBREL      uint8 = TYPE_PUBREL<<4 | 0x2
-	TYPE_FLAG_PUBCOMP     uint8 = TYPE_PUBCOMP << 4
-	TYPE_FLAG_SUBSCRIBE   uint8 = TYPE_SUBSCRIBE<<4 | 0x2
-	TYPE_FLAG_SUBACK      uint8 = TYPE_SUBACK << 4
-	TYPE_FLAG_UNSUBSCRIBE uint8 = TYPE_UNSUBSCRIBE<<4 | 0x2
-	TYPE_FLAG_UNSUBACK    uint8 = TYPE_UNSUBACK << 4
-	TYPE_FLAG_PINGREQ     uint8 = TYPE_PINGREQ << 4
-	TYPE_FLAG_PINGRESP    uint8 = TYPE_PINGRESP << 4
-	TYPE_FLAG_DISCONNECT  uint8 = TYPE_DISCONNECT << 4
-)
-const (
-	PROTOCOL             = "MQTT"
-	PROTOCOL_LEVEL uint8 = 0x4
-)
+
+func ReadBytes(buf []byte, b []byte) (int, error) {
+	if len(buf) < 2 {
+		return 0, fmt.Errorf("utils/readLPBytes: Insufficient buffer size. Expecting %d, got %d", 2, len(buf))
+	}
+	n, total := 0, 0
+	n = int(binary.BigEndian.Uint16(buf))
+	total += 2
+	if len(buf) < n {
+		return total, fmt.Errorf("utils/readLPBytes: Insufficient buffer size. Expecting %d, got %d", n, len(buf))
+	}
+	total += n
+	copy(buf[2:total], b)
+	return total, nil
+}
+func WriteBytes(buf []byte, b []byte) (int, error) {
+	total, n := 0, len(b)
+	if n > int(MaxBytes) {
+		return 0, fmt.Errorf("utils/writeLPBytes: Length (%d) greater than %d bytes", n, MaxBytes)
+	}
+	if len(buf) < 2+n {
+		return 0, fmt.Errorf("utils/writeLPBytes: Insufficient buffer size. Expecting %d, got %d", 2+n, len(buf))
+	}
+	binary.BigEndian.PutUint16(buf, uint16(n))
+	total += 2
+	copy(buf[total:], b)
+	total += n
+	return total, nil
+}

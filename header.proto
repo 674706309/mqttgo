@@ -9,22 +9,23 @@ message Connect {
     //固定头
     repeated header head = 1;
     //可变头
-    uint32 ProtocolName = 2; //协议
+    bytes ProtocolName = 2; //协议
     uint32 ProtocolLevel = 3; //协议级别
-    uint32 ConnectFlags = 4; //连接标志
+    // 7: UserNameFlag 密码标志
+    // 6: PasswordFlag 用户名标志
+    // 5: WillRetain 遗嘱保留标志
+    // 4-3: WillQoS 遗嘱服务质量等级
+    // 2: WillFlag 遗嘱标志
+    // 1: CleanSession 清理会话
+    // 0: Reserved 服务端必须验证CONNECT控制报文的保留标志位（第0位）是否为0，如果不为0必须断开客户端连接
+    uint32 ConnectFlags = 4; //连接标志 上述具体内容
     uint32 KeepAlive = 5; //保持时间单位秒
-    bool CleanSession = 6; //清理会话
-    bool WillFlag = 7; //遗嘱标志
-    bool bytesQoSWillQoS = 8; //遗嘱服务质量等级
-    bool WillRetain = 9; //遗嘱保留标志
-    bool UserNameFlag = 10; //用户名标志
-    bool PasswordFlag = 11; //密码标志
     //有效载荷
-    bytes ClientIdentifier = 12; //客户端标识符
-    bytes WillTopic = 13; //遗嘱主题
-    bytes WillMessage = 14; //遗嘱消息
-    bytes UserName = 15; //用户名
-    bytes Password = 16; //密码
+    bytes ClientIdentifier = 6; //客户端标识符
+    bytes WillTopic = 7; //遗嘱主题
+    bytes WillMessage = 8; //遗嘱消息
+    bytes UserName = 9; //用户名
+    bytes Password = 10; //密码
 }
 message Connbak {
     //固定头
