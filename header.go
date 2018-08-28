@@ -5,75 +5,83 @@ import (
 	"fmt"
 )
 
-type FixedHeader struct {
+type Header struct {
 	TypeAndFlag     uint8
 	RemainingLength []uint8
+
+	PacketID uint16 //报文标识符 部分拥有
 }
 
 //设置类型
-func (fh *FixedHeader) SetType(t uint8) {
-	fh.TypeAndFlag = (t << 4) | (fh.TypeAndFlag & 0xf)
+func (h *Header) SetType(t uint8) {
+	h.TypeAndFlag = (t << 4) | (h.TypeAndFlag & 0xf)
 }
 
 //获取类型
-func (fh *FixedHeader) GetType() uint8 {
-	return fh.TypeAndFlag >> 4
+func (h *Header) GetType() uint8 {
+	return h.TypeAndFlag >> 4
 }
 
 //设置标志
-func (fh *FixedHeader) SetFlag(t uint8) {
-	fh.TypeAndFlag = (fh.TypeAndFlag & 0xf0) | (t & 0xf)
+func (h *Header) SetFlag(t uint8) {
+	h.TypeAndFlag = (h.TypeAndFlag & 0xf0) | (t & 0xf)
 }
 
 //获取标志
-func (fh *FixedHeader) GetFlag() uint8 {
-	return fh.TypeAndFlag & 0xf
+func (h *Header) GetFlag() uint8 {
+	return h.TypeAndFlag & 0xf
 }
 
 //设置类型和标志
-func (fh *FixedHeader) SetTypeAndFlag(t uint8) {
-	fh.TypeAndFlag = t
+func (h *Header) SetTypeAndFlag(t uint8) {
+	h.TypeAndFlag = t
 }
 
 //获取类型和标志
-func (fh *FixedHeader) GetTypeAndFlag() uint8 {
-	return fh.TypeAndFlag
+func (h *Header) GetTypeAndFlag() uint8 {
+	return h.TypeAndFlag
 }
 
 //设置剩余长度
-func (fh *FixedHeader) SetRemainingLength(x uint64) {
-	binary.PutUvarint(fh.RemainingLength, x)
+func (h *Header) SetRemainingLength(x uint64) {
+	binary.PutUvarint(h.RemainingLength, x)
 }
 
 //获取剩余长度
-func (fh *FixedHeader) GetRemainingLength() []uint8 {
-	return fh.RemainingLength
+func (h *Header) GetRemainingLength() []uint8 {
+	return h.RemainingLength
+}
+func (p *Header) SetPacketID(t uint16) {
+	p.PacketID = t
+}
+func (p *Header) GetPacketID() uint16 {
+	return p.PacketID
 }
 
 //获取头部长度
-func (fh *FixedHeader) getLength() int {
-	_, l := binary.Uvarint(fh.GetRemainingLength())
+func (h *Header) getLength() int {
+	_, l := binary.Uvarint(h.GetRemainingLength())
 	return l + 1
 }
-func (fh FixedHeader) String() string {
-	return fmt.Sprintf("Type=%q, Flags=%08b, Remaining Length=%d", fh.GetType(), fh.GetFlag(), fh.GetRemainingLength())
+func (h Header) String() string {
+	return fmt.Sprintf("Type=%q, Flags=%08b, Remaining Length=%d", h.GetType(), h.GetFlag(), h.GetRemainingLength())
 }
 
 //头部编码
-func (fh *FixedHeader) encode(dst []byte) (int, error) {
-	ml := fh.getLength()
+func (h *Header) encode(dst []byte) (int, error) {
+	ml := h.getLength()
 	if len(dst) < ml {
 		return 0, fmt.Errorf("header/Encode: Insufficient buffer size. Expecting %d, got %d", ml, len(dst))
 	}
 	total := 0
-	l, _ := binary.Uvarint(fh.RemainingLength)
+	l, _ := binary.Uvarint(h.RemainingLength)
 	if l > uint64(MaxRemainingLength) || l < 0 {
-		return total, fmt.Errorf("header/Encode: Remaining length (%d) out of bound (max %d, min 0)", fh.GetRemainingLength(), MaxRemainingLength)
+		return total, fmt.Errorf("header/Encode: Remaining length (%d) out of bound (max %d, min 0)", h.GetRemainingLength(), MaxRemainingLength)
 	}
-	if !ValidType(fh.GetType()) {
-		return total, fmt.Errorf("header/Encode: Invalid message type %d", fh.GetType())
+	if !ValidType(h.GetType()) {
+		return total, fmt.Errorf("header/Encode: Invalid message type %d", h.GetType())
 	}
-	dst[total] = fh.GetTypeAndFlag()
+	dst[total] = h.GetTypeAndFlag()
 	total += 1
 	n := binary.PutUvarint(dst[total:], l)
 	total += n
@@ -81,22 +89,22 @@ func (fh *FixedHeader) encode(dst []byte) (int, error) {
 }
 
 //头部解码
-func (fh *FixedHeader) decode(src []byte) (int, error) {
+func (h *Header) decode(src []byte) (int, error) {
 	total := 0
-	fh.SetTypeAndFlag(src[total])
-	if !ValidType(fh.GetType()) {
-		return total, fmt.Errorf("header/Decode: Invalid message type %d", fh.GetType())
+	h.SetTypeAndFlag(src[total])
+	if !ValidType(h.GetType()) {
+		return total, fmt.Errorf("header/Decode: Invalid message type %d", h.GetType())
 	}
-	if fh.GetType() != TYPE_PUBLISH && fh.GetFlag() != DefaultFlags(fh.GetType()) {
-		return total, fmt.Errorf("header/Decode: Invalid message (%d) flags. Expecting %d, got %d", fh.GetType(), DefaultFlags(fh.GetType()), fh.GetFlag())
+	if h.GetType() != TYPE_PUBLISH && h.GetFlag() != DefaultFlags(h.GetType()) {
+		return total, fmt.Errorf("header/Decode: Invalid message (%d) flags. Expecting %d, got %d", h.GetType(), DefaultFlags(h.GetType()), h.GetFlag())
 	}
-	if fh.GetType() == TYPE_PUBLISH && !ValidQos((fh.GetFlag()>>1)&0x3) {
-		return total, fmt.Errorf("header/Decode: Invalid QoS (%d) for PUBLISH message", (fh.GetFlag()>>1)&0x3)
+	if h.GetType() == TYPE_PUBLISH && !ValidQos((h.GetFlag()>>1)&0x3) {
+		return total, fmt.Errorf("header/Decode: Invalid QoS (%d) for PUBLISH message", (h.GetFlag()>>1)&0x3)
 	}
 	total++
 	ml, m := binary.Uvarint(src[total:])
 	total += m
-	fh.SetRemainingLength(ml)
+	h.SetRemainingLength(ml)
 	if ml > uint64(MaxRemainingLength) || ml < 0 {
 		return total, fmt.Errorf("header/Decode: Remaining length (%d) out of bound (max %d, min 0)", ml, MaxRemainingLength)
 	}

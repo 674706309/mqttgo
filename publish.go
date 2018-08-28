@@ -7,17 +7,20 @@ import (
 
 type Publish struct {
 	//固定头
-	Header FixedHeader
+	Header Header
 	//可变头
-	TopicName        []byte //主题名
-	PacketIdentifier uint16 //报文标识符
+	TopicName []byte //主题名
 	//有效载荷
 	Payload []byte
 }
 
+func NewPublish() (c *Publish) {
+	c.Header.SetType(TYPE_PUBLISH)
+	return
+}
 func (p Publish) String() string {
 	return fmt.Sprintf("%s, Topic=%q, Packet ID=%d, QoS=%d, Retained=%t, Dup=%t, Payload=%t",
-		p.Header, p.GetTopicName(), p.PacketIdentifier, p.GetQoS(), p.GetRetain(), p.GetDup(), p.GetPayload())
+		p.Header, p.GetTopicName(), p.Header.GetPacketID(), p.GetQoS(), p.GetRetain(), p.GetDup(), p.GetPayload())
 }
 func (p *Publish) SetDup(t bool) {
 	temp := p.Header.GetTypeAndFlag()
@@ -61,12 +64,6 @@ func (p *Publish) SetTopicName(t []byte) error {
 func (p *Publish) GetTopicName() []byte {
 	return p.TopicName
 }
-func (p *Publish) SetPacketIdentifier(t uint16) {
-	p.PacketIdentifier = t
-}
-func (p *Publish) GetPacketIdentifier() uint16 {
-	return p.PacketIdentifier
-}
 func (p *Publish) SetPayload(t []byte) {
 	p.Payload = t
 }
@@ -104,8 +101,8 @@ func (p *Publish) encode(dst []byte) (total int, err error) {
 		return
 	}
 	if p.GetQoS() != 0 {
-		binary.BigEndian.PutUint16(dst[total:], p.GetPacketIdentifier())
-		total += n
+		binary.BigEndian.PutUint16(dst[total:], p.Header.GetPacketID())
+		total += 2
 	}
 	copy(dst[total:], p.GetPayload())
 	total += len(p.GetPayload())
@@ -133,7 +130,7 @@ func (p *Publish) decode(src []byte) (total int, err error) {
 		return total, fmt.Errorf("publish/Decode: Invalid topic name (%s). Must not be empty or contain wildcard characters", string(p.GetTopicName()))
 	}
 	if p.GetQoS() != 0 {
-		p.SetPacketIdentifier(binary.BigEndian.Uint16(src[total:]))
+		p.Header.SetPacketID(binary.BigEndian.Uint16(src[total:]))
 		total += 2
 	}
 	RemainingLength, _ = binary.Uvarint(p.Header.GetRemainingLength())

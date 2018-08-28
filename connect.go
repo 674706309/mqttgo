@@ -10,7 +10,7 @@ var ClientIDRegexp *regexp.Regexp
 
 type Connect struct {
 	//固定头
-	Header FixedHeader
+	Header Header
 	//可变头
 	ProtocolName  []byte //协议
 	ProtocolLevel byte   //协议级别

@@ -4,7 +4,7 @@ import "fmt"
 
 type Connack struct {
 	//固定头
-	Header FixedHeader
+	Header Header
 	//可变头
 	ConnectAcknowledgeFlags uint8
 	ConnectReturnCode       uint8 //返回码
