@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	MaxRemainingLength int32  = math.MaxInt32 // 剩余字段最大长度
+	MaxRemainingLength int32  = 268435455 // 剩余字段最大长度
 	MaxBytes           uint16 = math.MaxInt16
 )
 const (

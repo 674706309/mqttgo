@@ -30,6 +30,7 @@ type Connect struct {
 }
 
 func NewConnect() (c *Connect) {
+	c = &Connect{}
 	c.Header.SetType(TYPE_CONNECT)
 	c.Header.SetFlag(TYPE_FLAG_CONNECT)
 	c.SetProtocolName(bytes.Join([][]byte{{0x00, 0x04}, []byte(PROTOCOL)}, []byte("")))
@@ -88,7 +89,7 @@ func (c *Connect) SetWillFlag(v bool) {
 func (c *Connect) GetWillFlag() bool {
 	return ((c.ConnectFlags >> 2) & 0x1) == 1
 }
-func (c *Connect) SetWillQos(qos byte) error {
+func (c *Connect) SetWillQos(qos byte) (err error) {
 	if c.GetWillFlag() && qos != QosAtMostOnce && qos != QosAtLeastOnce && qos != QosExactlyOnce {
 		return fmt.Errorf("connect/SetWillQos: Invalid QoS level %d", qos)
 	}
@@ -96,7 +97,7 @@ func (c *Connect) SetWillQos(qos byte) error {
 		return fmt.Errorf("connect/SetWillQos: Invalid QoS level %d", qos)
 	}
 	c.ConnectFlags = (c.ConnectFlags & 231) | (qos << 3) // 231 = 11100111
-	return nil
+	return
 }
 func (c *Connect) GetWillQos() byte {
 	return (c.ConnectFlags >> 3) & 0x3
@@ -137,8 +138,12 @@ func (c *Connect) SetKeepAlive(t uint16) {
 func (c *Connect) GetKeepAlive() uint16 {
 	return c.KeepAlive
 }
-func (c *Connect) SetClientID(t []byte) {
+func (c *Connect) SetClientID(t []byte) (err error) {
+	if len(t) > 0 && !ValidClientID(t) {
+		return fmt.Errorf("ClientID error")
+	}
 	c.ClientID = t
+	return
 }
 func (c *Connect) GetClientID() []byte {
 	return c.ClientID
@@ -156,12 +161,14 @@ func (c *Connect) GetWillMessage() []byte {
 	return c.WillMessage
 }
 func (c *Connect) SetUserName(t []byte) {
+	c.SetUsernameFlag(true)
 	c.UserName = t
 }
 func (c *Connect) GetUserName() []byte {
 	return c.UserName
 }
 func (c *Connect) SetPassword(t []byte) {
+	c.SetPasswordFlag(true)
 	c.Password = t
 }
 func (c *Connect) GetPassword() []byte {

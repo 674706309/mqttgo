@@ -17,8 +17,13 @@ func (h Header) String() string {
 }
 
 //设置类型
-func (h *Header) SetType(t byte) {
+func (h *Header) SetType(t byte) (err error) {
+	if !ValidType(t) {
+		return fmt.Errorf("header/SetType: Invalid control packet type %d", t)
+	}
 	h.TypeAndFlag = (t << 4) | (h.TypeAndFlag & 0xf)
+	h.SetFlag(DefaultFlags(h.GetType()))
+	return
 }
 
 //获取类型
@@ -27,8 +32,12 @@ func (h *Header) GetType() byte {
 }
 
 //设置标志
-func (h *Header) SetFlag(t byte) {
+func (h *Header) SetFlag(t byte) (err error) {
+	if !(DefaultFlags(h.GetType()) == t) {
+		return fmt.Errorf("Flag error")
+	}
 	h.TypeAndFlag = (t & 0xf) | (h.TypeAndFlag & 0xf0)
+	return
 }
 
 //获取标志
@@ -47,8 +56,13 @@ func (h *Header) GetTypeAndFlag() byte {
 }
 
 //设置剩余长度
-func (h *Header) SetRemainingLength(t uint64) {
+func (h *Header) SetRemainingLength(t uint64) (err error) {
+	if t > uint64(MaxRemainingLength) || t < 0 {
+		return fmt.Errorf("header/SetLength: Remaining length (%d) out of bound (max %d, min 0)", t, MaxRemainingLength)
+	}
+	h.RemainingLength = make([]byte, 8)
 	binary.PutUvarint(h.RemainingLength, t)
+	return
 }
 
 //获取剩余长度
@@ -80,12 +94,12 @@ func (h *Header) encode(dst []byte) (total int, err error) {
 	)
 	total = 0
 	l = h.GetRemainingLength()
-	if l > uint64(MaxRemainingLength) || l < 0 {
-		return total, fmt.Errorf("header/Encode: Remaining length (%d) out of bound (max %d, min 0)", h.GetRemainingLength(), MaxRemainingLength)
-	}
-	if !ValidType(h.GetType()) {
-		return total, fmt.Errorf("header/Encode: Invalid message type %d", h.GetType())
-	}
+	//if l > uint64(MaxRemainingLength) || l < 0 {
+	//	return total, fmt.Errorf("header/Encode: Remaining length (%d) out of bound (max %d, min 0)", h.GetRemainingLength(), MaxRemainingLength)
+	//}
+	//if !ValidType(h.GetType()) {
+	//	return total, fmt.Errorf("header/Encode: Invalid message type %d", h.GetType())
+	//}
 	dst[total] = h.GetTypeAndFlag()
 	total += 1
 	n = binary.PutUvarint(dst[total:], l)

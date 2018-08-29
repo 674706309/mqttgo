@@ -19,7 +19,7 @@ func NewPublish() (c *Publish) {
 	return
 }
 func (p Publish) String() string {
-	return fmt.Sprintf("%s, Topic=%q, Packet ID=%d, QoS=%d, Retained=%t, Dup=%t, Payload=%t",
+	return fmt.Sprintf("%s, Topic=%q, PacketID=%d, QoS=%d, Retained=%t, Dup=%t, Payload=%d",
 		p.Header, p.GetTopicName(), p.Header.GetPacketID(), p.GetQoS(), p.GetRetain(), p.GetDup(), p.GetPayload())
 }
 func (p *Publish) SetDup(t bool) {
