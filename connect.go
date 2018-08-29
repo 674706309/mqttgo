@@ -1,12 +1,10 @@
 package mqtt
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
-	"regexp"
 )
-
-var ClientIDRegexp *regexp.Regexp
 
 type Connect struct {
 	//固定头
@@ -31,14 +29,11 @@ type Connect struct {
 	Password    []byte //密码
 }
 
-func init() {
-	ClientIDRegexp = regexp.MustCompile("^[0-9a-zA-Z _]*$")
-}
 func NewConnect() (c *Connect) {
 	c.Header.SetType(TYPE_CONNECT)
 	c.Header.SetFlag(TYPE_FLAG_CONNECT)
-	//msg.SetProtocolName(bytes.Join([][]byte{{0x00, 0x04}, []byte(PROTOCOL)}, []byte("")))
-	//msg.SetProtocolLevel(PROTOCOL_LEVEL)
+	c.SetProtocolName(bytes.Join([][]byte{{0x00, 0x04}, []byte(PROTOCOL)}, []byte("")))
+	c.SetProtocolLevel(PROTOCOL_LEVEL)
 	return
 }
 func (c *Connect) String() string {
@@ -94,7 +89,10 @@ func (c *Connect) GetWillFlag() bool {
 	return ((c.ConnectFlags >> 2) & 0x1) == 1
 }
 func (c *Connect) SetWillQos(qos byte) error {
-	if qos != QosAtMostOnce && qos != QosAtLeastOnce && qos != QosExactlyOnce {
+	if c.GetWillFlag() && qos != QosAtMostOnce && qos != QosAtLeastOnce && qos != QosExactlyOnce {
+		return fmt.Errorf("connect/SetWillQos: Invalid QoS level %d", qos)
+	}
+	if !c.GetWillFlag() && qos != QosAtMostOnce {
 		return fmt.Errorf("connect/SetWillQos: Invalid QoS level %d", qos)
 	}
 	c.ConnectFlags = (c.ConnectFlags & 231) | (qos << 3) // 231 = 11100111
@@ -145,10 +143,6 @@ func (c *Connect) SetClientID(t []byte) {
 func (c *Connect) GetClientID() []byte {
 	return c.ClientID
 }
-func (c *Connect) ValidClientID(t []byte) bool {
-
-	return ClientIDRegexp.Match(t)
-}
 func (c *Connect) SetWillTopic(t []byte) {
 	c.WillTopic = t
 }
@@ -195,35 +189,42 @@ func (c *Connect) GetRemainingLength() (total int) {
 func (c *Connect) Length() int {
 	return c.Header.Length() + c.GetRemainingLength()
 }
-func (c *Connect) encode(dst []byte) (int, error) {
+func (c *Connect) encode(dst []byte) (total int, err error) {
+	var (
+		l, ml, n int
+	)
 	if t := c.Header.GetType(); t != TYPE_CONNECT {
 		return 0, fmt.Errorf("connect/Encode: Invalid message type. Expecting %d, got %d", TYPE_CONNECT, t)
 	}
-	if _, ok := SupportedVersions[c.GetProtocolLevel()]; !ok {
-		return 0, fmt.Errorf("ErrInvalidProtocolVersion")
+	l = c.Length()
+	if len(dst) < l {
+		return 0, fmt.Errorf("connect/Encode: Insufficient buffer size. Expecting %d, got %d", l, len(dst))
 	}
-	ml := c.GetRemainingLength()
+	ml = c.GetRemainingLength()
 	c.Header.SetRemainingLength(uint64(ml))
-	total := 0
-	n, err := c.Header.encode(dst[total:])
+	total = 0
+	n, err = c.Header.encode(dst[total:])
 	total += n
 	if err != nil {
-		return total, err
+		return
 	}
 	n, err = c.encodeMessage(dst[total:])
 	total += n
 	if err != nil {
-		return total, err
+		return
 	}
-	return total, nil
+	return
 }
 
-func (c *Connect) encodeMessage(dst []byte) (int, error) {
-	total := 0
-	n, err := WriteBytes(dst[total:], c.GetProtocolName())
+func (c *Connect) encodeMessage(dst []byte) (total int, err error) {
+	var (
+		n int
+	)
+	total = 0
+	n, err = WriteBytes(dst[total:], c.GetProtocolName())
 	total += n
 	if err != nil {
-		return total, err
+		return
 	}
 	dst[total] = c.GetProtocolLevel()
 	total += 1
@@ -234,62 +235,66 @@ func (c *Connect) encodeMessage(dst []byte) (int, error) {
 	n, err = WriteBytes(dst[total:], c.GetClientID())
 	total += n
 	if err != nil {
-		return total, err
+		return
 	}
 	if c.GetWillFlag() {
 		n, err = WriteBytes(dst[total:], c.GetWillTopic())
 		total += n
 		if err != nil {
-			return total, err
+			return
 		}
-
 		n, err = WriteBytes(dst[total:], c.GetWillMessage())
 		total += n
 		if err != nil {
-			return total, err
+			return
 		}
 	}
-	if c.GetUsernameFlag() && len(c.GetUserName()) > 0 {
+	if c.GetUsernameFlag() {
 		n, err = WriteBytes(dst[total:], c.GetUserName())
 		total += n
 		if err != nil {
-			return total, err
+			return
 		}
 	}
-	if c.GetPasswordFlag() && len(c.GetPassword()) > 0 {
+	if c.GetPasswordFlag() {
 		n, err = WriteBytes(dst[total:], c.GetPassword())
 		total += n
 		if err != nil {
-			return total, err
+			return
 		}
 	}
-	return total, nil
+	return
 }
-func (c *Connect) decode(src []byte) (int, error) {
-	total := 0
-	n, err := c.Header.decode(src[total:])
+func (c *Connect) decode(src []byte) (total int, err error) {
+	var (
+		n int
+	)
+	total = 0
+	n, err = c.Header.decode(src[total:])
+	total += n
 	if err != nil {
-		return total + n, err
+		return
 	}
+	n, err = c.decodeMessage(src[total:])
 	total += n
-	if n, err = c.decodeMessage(src[total:]); err != nil {
-		return total + n, err
+	if err != nil {
+		return
 	}
-	total += n
-	return total, nil
+
+	return
 }
 
-func (c *Connect) decodeMessage(src []byte) (int, error) {
+func (c *Connect) decodeMessage(src []byte) (total int, err error) {
 	var (
-		err      error
-		temp     []byte
-		n, total int
+		temp []byte
+		n    int
+		qos  byte
 	)
 	n, total = 0, 0
 	n, err = ReadBytes(src[total:], temp)
 	total += n
 	if err != nil {
-		return total, err
+		return
 	}
 	if _, ok := SupportedVersions[src[total]]; !ok {
 		return total, fmt.Errorf("ErrInvalidProtocolVersion")
@@ -302,11 +307,11 @@ func (c *Connect) decodeMessage(src []byte) (int, error) {
 	if c.GetConnectFlags()&0x1 != 0 {
 		return total, fmt.Errorf("connect/decodeMessage: Connect Flags reserved bit 0 is not 0")
 	}
-	if c.GetWillQos() > QosExactlyOnce {
+	if qos = c.GetWillQos(); c.GetWillFlag() && qos != QosAtMostOnce && qos != QosAtLeastOnce && qos != QosExactlyOnce {
 		return total, fmt.Errorf("connect/decodeMessage: Invalid QoS level (%d) for %d message", c.GetWillQos(), c.Header.GetType())
 	}
-	if !c.GetWillFlag() && (c.GetWillRetain() || c.GetWillQos() != QosAtMostOnce) {
-		return total, fmt.Errorf("connect/decodeMessage: Protocol violation: If the Will Flag (%t) is set to 0 the Will QoS (%d) and Will Retain (%t) fields MUST be set to zero", c.GetWillFlag(), c.GetWillQos(), c.GetWillRetain())
+	if qos = c.GetWillQos(); !c.GetWillFlag() && (c.GetWillRetain() || c.GetWillQos() != QosAtMostOnce) {
+		return total, fmt.Errorf("connect/decodeMessage: Protocol violation: If the Will Flag (%t) is set to 0 the Will QoS (%d) and Will Retain (%t) fields MUST be set to zero", c.GetWillFlag(), qos, c.GetWillRetain())
 	}
 	if c.GetUsernameFlag() && !c.GetPasswordFlag() {
 		return total, fmt.Errorf("connect/decodeMessage: Username flag is set but Password flag is not set")
@@ -320,24 +325,26 @@ func (c *Connect) decodeMessage(src []byte) (int, error) {
 	c.SetClientID(temp)
 	total += n
 	if err != nil {
-		return total, err
+		return
 	}
 	if len(c.GetClientID()) == 0 && !c.GetCleanSession() {
 		return total, fmt.Errorf("ErrIdentifierRejected")
 	}
-	if len(c.GetClientID()) > 0 && !c.ValidClientID(c.GetClientID()) {
+	if len(c.GetClientID()) > 0 && !ValidClientID(c.GetClientID()) {
 		return total, fmt.Errorf("ErrIdentifierRejected")
 	}
 	if c.GetWillFlag() {
 		n, err = ReadBytes(src[total:], temp)
+		c.SetWillTopic(temp)
 		total += n
 		if err != nil {
-			return total, err
+			return
 		}
 		n, err = ReadBytes(src[total:], temp)
+		c.SetWillMessage(temp)
 		total += n
 		if err != nil {
-			return total, err
+			return
 		}
 	}
 	if c.GetUsernameFlag() && len(src[total:]) > 0 {
@@ -345,7 +352,7 @@ func (c *Connect) decodeMessage(src []byte) (int, error) {
 		c.SetUserName(temp)
 		total += n
 		if err != nil {
-			return total, err
+			return
 		}
 	}
 	if c.GetPasswordFlag() && len(src[total:]) > 0 {
@@ -353,8 +360,8 @@ func (c *Connect) decodeMessage(src []byte) (int, error) {
 		c.SetPassword(temp)
 		total += n
 		if err != nil {
-			return total, err
+			return
 		}
 	}
-	return total, nil
+	return
 }

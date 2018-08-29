@@ -43,13 +43,13 @@ func (s *Suback) GetRemainingLength() int {
 }
 func (s *Suback) encode(dst []byte) (total int, err error) {
 	var (
-		n int
+		ml, l, n int
 	)
-	hl := s.Header.Length()
-	ml := s.GetRemainingLength()
-	if len(dst) < hl+ml {
-		return 0, fmt.Errorf("suback/Encode: Insufficient buffer size. Expecting %d, got %d", hl+ml, len(dst))
+	l = s.Length()
+	if len(dst) < l {
+		return 0, fmt.Errorf("Suback/Encode: Insufficient buffer size. Expecting %d, got %d", l, len(dst))
 	}
+	ml = s.GetRemainingLength()
 	s.Header.SetRemainingLength(uint64(ml))
 	total = 0
 	n, err = s.Header.encode(dst[total:])
@@ -66,7 +66,6 @@ func (s *Suback) encode(dst []byte) (total int, err error) {
 func (s *Suback) decode(src []byte) (total int, err error) {
 	var (
 		hl int
-		ml uint64
 	)
 	total = 0
 	hl, err = s.Header.decode(src[total:])
@@ -76,8 +75,7 @@ func (s *Suback) decode(src []byte) (total int, err error) {
 	}
 	s.Header.SetPacketID(binary.BigEndian.Uint16(src[total:]))
 	total += 2
-	ml, _ = binary.Uvarint(s.Header.GetRemainingLength())
-	l := int(ml) - (total - hl)
+	l := int(s.Header.GetRemainingLength()) - (total - hl)
 	s.AddReturnCodes(src[total : total+l])
 	total += len(s.ReturnCode)
 	return

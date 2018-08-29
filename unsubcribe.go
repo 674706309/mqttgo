@@ -20,9 +20,8 @@ func NewUnSubscribe() (u *UnSubscribe) {
 }
 func (u UnSubscribe) String() (str string) {
 	str = fmt.Sprintf("%s, Packet ID=%d", u.Header, u.Header.GetPacketID())
-	qos := u.GetQos()
 	for i, t := range u.GetTopicFilter() {
-		str += fmt.Sprintf(", Topic[%d]=%q/%d", i, string(t), qos[i])
+		str += fmt.Sprintf(", Topic[%d]=%q", i, string(t))
 	}
 	return
 }
@@ -102,6 +101,7 @@ func (u *UnSubscribe) decode(src []byte) (total int, err error) {
 		hl, ml, n int
 		temp      []byte
 	)
+
 	total = 0
 	hl, err = u.Header.decode(src[total:])
 	total += hl
@@ -110,7 +110,7 @@ func (u *UnSubscribe) decode(src []byte) (total int, err error) {
 	}
 	u.Header.SetPacketID(binary.BigEndian.Uint16(src[total:]))
 	total += 2
-	ml = -(total - hl)
+	ml = int(u.Header.GetRemainingLength()) - (total - hl)
 	for ml > 0 {
 		n, err = ReadBytes(src[total:], temp)
 		total += n

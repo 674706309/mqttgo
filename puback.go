@@ -19,14 +19,17 @@ func NewPuback() (p *Puback) {
 func (p Puback) String() string {
 	return fmt.Sprintf("%s, PacketID=%d", p.Header, p.Header.GetPacketID())
 }
-func (p *Puback) GetLength() int {
-	ml, _ := binary.Uvarint(p.Header.GetRemainingLength())
-	return p.Header.Length() + int(ml)
+func (p *Puback) Length() int {
+	return p.Header.Length() + int(p.Header.GetRemainingLength())
 }
 func (p *Puback) encode(dst []byte) (total int, err error) {
 	var (
-		n int
+		l, n int
 	)
+	l = p.Length()
+	if len(dst) < l {
+		return 0, fmt.Errorf("pingreq/Encode: Insufficient buffer size. Expecting %d, got %d", l, len(dst))
+	}
 	total = 0
 	n, err = p.Header.encode(dst[total:])
 	total += n

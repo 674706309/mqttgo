@@ -21,8 +21,12 @@ func (p *Pingreq) Length() int {
 }
 func (p *Pingreq) encode(dst []byte) (total int, err error) {
 	var (
-		n int
+		l, n int
 	)
+	l = p.Length()
+	if len(dst) < l {
+		return 0, fmt.Errorf("pingreq/Encode: Insufficient buffer size. Expecting %d, got %d", l, len(dst))
+	}
 	total = 0
 	n, err = p.Header.encode(dst[total:])
 	total += n

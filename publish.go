@@ -70,7 +70,7 @@ func (p *Publish) SetPayload(t []byte) {
 func (p *Publish) GetPayload() []byte {
 	return p.Payload
 }
-func (p *Publish) GetLength() int {
+func (p *Publish) Length() int {
 	total := 2 + len(p.GetTopicName()) + len(p.GetPayload())
 	if p.GetQoS() != 0 {
 		total += 2
@@ -87,7 +87,7 @@ func (p *Publish) encode(dst []byte) (total int, err error) {
 	if len(p.GetPayload()) == 0 {
 		return 0, fmt.Errorf("publish/Encode: Payload is empty")
 	}
-	ml = p.GetLength()
+	ml = p.Length()
 	p.Header.SetRemainingLength(uint64(ml))
 	total = 0
 	n, err = p.Header.encode(dst[total:])
@@ -110,9 +110,8 @@ func (p *Publish) encode(dst []byte) (total int, err error) {
 }
 func (p *Publish) decode(src []byte) (total int, err error) {
 	var (
-		temp            []byte
-		hl, n           int
-		RemainingLength uint64
+		temp     []byte
+		l, hl, n int
 	)
 	total = 0
 	hl, err = p.Header.decode(src[total:])
@@ -133,8 +132,7 @@ func (p *Publish) decode(src []byte) (total int, err error) {
 		p.Header.SetPacketID(binary.BigEndian.Uint16(src[total:]))
 		total += 2
 	}
-	RemainingLength, _ = binary.Uvarint(p.Header.GetRemainingLength())
-	l := int(RemainingLength) - (total - hl)
+	l = int(p.Header.GetRemainingLength()) - (total - hl)
 	p.SetPayload(src[total : total+l])
 	total += l
 	return

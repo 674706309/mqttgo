@@ -33,7 +33,7 @@ func (u *UnSuback) encode(dst []byte) (total int, err error) {
 	if err != nil {
 		return
 	}
-	binary.BigEndian.PutUint16(dst[total:], s.Header.GetPacketID())
+	binary.BigEndian.PutUint16(dst[total:], u.Header.GetPacketID())
 	total += n
 	return
 }

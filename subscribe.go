@@ -83,14 +83,14 @@ func (s *Subscribe) GetRemainingLength() (total int) {
 }
 func (s *Subscribe) encode(dst []byte) (total int, err error) {
 	var (
-		n   int
-		qos []byte
+		ml, l, n int
+		qos      []byte
 	)
-	hl := s.Header.Length()
-	ml := s.GetRemainingLength()
-	if len(dst) < hl+ml {
-		return 0, fmt.Errorf("subscribe/Encode: Insufficient buffer size. Expecting %d, got %d", hl+ml, len(dst))
+	l = s.Length()
+	if len(dst) < l {
+		return 0, fmt.Errorf("Subscribe/Encode: Insufficient buffer size. Expecting %d, got %d", l, len(dst))
 	}
+	ml = s.GetRemainingLength()
 	s.Header.SetRemainingLength(uint64(ml))
 	total = 0
 	n, err = s.Header.encode(dst[total:])

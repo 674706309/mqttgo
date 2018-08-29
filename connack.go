@@ -6,12 +6,12 @@ type Connack struct {
 	//固定头
 	Header Header
 	//可变头
-	ConnectAcknowledgeFlags uint8
-	ConnectReturnCode       uint8 //返回码
+	AcknowledgeFlags uint8
+	ReturnCode       uint8 //返回码
 }
 
 func NewConnack() (c *Connack) {
-	c.Header.SetType(TYPE_FLAG_CONNECT)
+	c.Header.SetType(TYPE_CONNACK)
 	c.Header.SetFlag(TYPE_FLAG_CONNACK)
 	c.Header.SetRemainingLength(2)
 	return
@@ -21,52 +21,66 @@ func (c Connack) String() string {
 }
 func (c *Connack) SetSessionPresent(v bool) {
 	if v {
-		c.ConnectAcknowledgeFlags |= 0x1 // 00000001
+		c.AcknowledgeFlags |= 0x1 // 00000001
 	} else {
-		c.ConnectAcknowledgeFlags &= 254 // 11111110
+		c.AcknowledgeFlags &= 254 // 11111110
 	}
 }
 
 func (c *Connack) GetSessionPresent() bool {
-	return (c.ConnectAcknowledgeFlags & 0x1) == 1
+	return (c.AcknowledgeFlags & 0x1) == 1
 }
 func (c *Connack) SetReturnCode(code uint8) {
-	c.ConnectReturnCode = code
+	c.ReturnCode = code
 }
 func (c *Connack) GetReturnCode() uint8 {
-	return c.ConnectReturnCode
+	return c.ReturnCode
 }
-func (c *Connack) GetLength() int {
+func (c *Connack) Length() int {
+	return c.Header.Length() + c.GetRemainingLength()
+}
+func (c *Connack) GetRemainingLength() int {
 	return 2
 }
-func (c *Connack) encode(dst []byte) (int, error) {
-	ml := c.GetLength()
+func (c *Connack) encode(dst []byte) (total int, err error) {
+	var (
+		l, ml int
+	)
+	l = c.Length()
+	if len(dst) < l {
+		return 0, fmt.Errorf("connack/Encode: Insufficient buffer size. Expecting %d, got %d", l, len(dst))
+	}
+	ml = c.GetRemainingLength()
 	c.Header.SetRemainingLength(uint64(ml))
-	total := 0
+	total = 0
 	n, err := c.Header.encode(dst[total:])
 	total += n
 	if err != nil {
-		return 0, err
+		return
 	}
 	if c.GetSessionPresent() {
 		dst[total] = 1
 	}
 	total++
-	if c.ConnectReturnCode > 5 {
-		return total, fmt.Errorf("connack/Encode: Invalid CONNACK return code (%d)", c.ConnectReturnCode)
+	if c.GetReturnCode() > 5 {
+		return total, fmt.Errorf("connack/Encode: Invalid CONNACK return code (%d)", c.GetReturnCode())
 	}
-	dst[total] = c.ConnectReturnCode
+	dst[total] = c.GetReturnCode()
 	total++
-	return total, nil
+	return
 }
-func (c *Connack) decode(src []byte) (int, error) {
-	total := 0
-	n, err := c.Header.decode(src)
+func (c *Connack) decode(src []byte) (total int, err error) {
+	var (
+		n int
+		b byte
+	)
+	total = 0
+	n, err = c.Header.decode(src)
 	total += n
 	if err != nil {
-		return total, err
+		return
 	}
-	b := src[total]
+	b = src[total]
 	if b&254 != 0 {
 		return 0, fmt.Errorf("connack/Decode: Bits 7-1 in Connack Acknowledge Flags byte (1) are not 0")
 	}
@@ -78,5 +92,5 @@ func (c *Connack) decode(src []byte) (int, error) {
 	}
 	c.SetReturnCode(b)
 	total++
-	return total, nil
+	return
 }

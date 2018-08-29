@@ -3,6 +3,7 @@ package mqtt
 import (
 	"bytes"
 	"math"
+	"regexp"
 )
 
 const (
@@ -28,19 +29,19 @@ const (
 	TYPE_RESERVED2
 )
 const (
-	TYPE_FLAG_CONNECT     uint8 = TYPE_CONNECT << 4
-	TYPE_FLAG_CONNACK     uint8 = TYPE_CONNACK << 4
-	TYPE_FLAG_PUBACK      uint8 = TYPE_PUBACK << 4
-	TYPE_FLAG_PUBREC      uint8 = TYPE_PUBREC << 4
-	TYPE_FLAG_PUBREL      uint8 = TYPE_PUBREL<<4 | 0x2
-	TYPE_FLAG_PUBCOMP     uint8 = TYPE_PUBCOMP << 4
-	TYPE_FLAG_SUBSCRIBE   uint8 = TYPE_SUBSCRIBE<<4 | 0x2
-	TYPE_FLAG_SUBACK      uint8 = TYPE_SUBACK << 4
-	TYPE_FLAG_UNSUBSCRIBE uint8 = TYPE_UNSUBSCRIBE<<4 | 0x2
-	TYPE_FLAG_UNSUBACK    uint8 = TYPE_UNSUBACK << 4
-	TYPE_FLAG_PINGREQ     uint8 = TYPE_PINGREQ << 4
-	TYPE_FLAG_PINGRESP    uint8 = TYPE_PINGRESP << 4
-	TYPE_FLAG_DISCONNECT  uint8 = TYPE_DISCONNECT << 4
+	TYPE_FLAG_CONNECT     = 0x0
+	TYPE_FLAG_CONNACK     = 0x0
+	TYPE_FLAG_PUBACK      = 0x0
+	TYPE_FLAG_PUBREC      = 0x0
+	TYPE_FLAG_PUBREL      = 0x0 | 0x2
+	TYPE_FLAG_PUBCOMP     = 0x0
+	TYPE_FLAG_SUBSCRIBE   = 0x0 | 0x2
+	TYPE_FLAG_SUBACK      = 0x0
+	TYPE_FLAG_UNSUBSCRIBE = 0x0 | 0x2
+	TYPE_FLAG_UNSUBACK    = 0x0
+	TYPE_FLAG_PINGREQ     = 0x0
+	TYPE_FLAG_PINGRESP    = 0x0
+	TYPE_FLAG_DISCONNECT  = 0x0
 )
 const (
 	PROTOCOL             = "MQTT"
@@ -52,40 +53,33 @@ func ValidType(t uint8) bool {
 }
 func DefaultFlags(t uint8) uint8 {
 	switch t {
-	case TYPE_RESERVED:
-		return 0
 	case TYPE_CONNECT:
-		return 0
+		return TYPE_FLAG_CONNECT
 	case TYPE_CONNACK:
-		return 0
-	case TYPE_PUBLISH:
-		return 0
+		return TYPE_FLAG_CONNACK
 	case TYPE_PUBACK:
-		return 0
+		return TYPE_FLAG_PUBACK
 	case TYPE_PUBREC:
-		return 0
+		return TYPE_FLAG_PUBREC
 	case TYPE_PUBREL:
-		return 2
+		return TYPE_FLAG_PUBREL
 	case TYPE_PUBCOMP:
-		return 0
+		return TYPE_FLAG_PUBCOMP
 	case TYPE_SUBSCRIBE:
-		return 2
+		return TYPE_FLAG_SUBSCRIBE
 	case TYPE_SUBACK:
-		return 0
+		return TYPE_FLAG_SUBACK
 	case TYPE_UNSUBSCRIBE:
-		return 2
+		return TYPE_FLAG_UNSUBSCRIBE
 	case TYPE_UNSUBACK:
-		return 0
+		return TYPE_FLAG_UNSUBACK
 	case TYPE_PINGREQ:
-		return 0
+		return TYPE_FLAG_PINGREQ
 	case TYPE_PINGRESP:
-		return 0
+		return TYPE_FLAG_PINGRESP
 	case TYPE_DISCONNECT:
-		return 0
-	case TYPE_RESERVED2:
-		return 0
+		return TYPE_FLAG_DISCONNECT
 	}
-
 	return 0
 }
 
@@ -96,8 +90,17 @@ const (
 	QosFailure = 0x80
 )
 
+var ClientIDRegexp *regexp.Regexp
+
+func init() {
+	ClientIDRegexp = regexp.MustCompile("^[0-9a-zA-Z _]*$")
+}
+
 func ValidQos(qos byte) bool {
 	return qos == QosAtMostOnce || qos == QosAtLeastOnce || qos == QosExactlyOnce
+}
+func ValidClientID(t []byte) bool {
+	return ClientIDRegexp.Match(t)
 }
 
 var SupportedVersions = map[byte]string{

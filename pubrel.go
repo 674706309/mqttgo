@@ -19,14 +19,17 @@ func NewPubrel() (p *Pubrel) {
 func (p Pubrel) String() string {
 	return fmt.Sprintf("%s, PacketID=%d", p.Header, p.Header.GetPacketID())
 }
-func (p *Pubrel) GetLength() int {
-	ml, _ := binary.Uvarint(p.Header.GetRemainingLength())
-	return p.Header.Length() + int(ml)
+func (p *Pubrel) Length() int {
+	return p.Header.Length() + int(p.Header.GetRemainingLength())
 }
 func (p *Pubrel) encode(dst []byte) (total int, err error) {
 	var (
-		n int
+		l, n int
 	)
+	l = p.Length()
+	if len(dst) < l {
+		return 0, fmt.Errorf("Suback/Encode: Insufficient buffer size. Expecting %d, got %d", l, len(dst))
+	}
 	total = 0
 	n, err = p.Header.encode(dst[total:])
 	total += n
