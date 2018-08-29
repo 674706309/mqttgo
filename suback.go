@@ -1,1 +1,84 @@
 package mqtt
+
+import (
+	"encoding/binary"
+	"fmt"
+)
+
+type Suback struct {
+	Header Header
+
+	ReturnCode []byte
+}
+
+func NewSuback() (s *Suback) {
+	s.Header.SetType(TYPE_SUBACK)
+	s.Header.SetFlag(TYPE_FLAG_SUBACK)
+	return
+}
+func (s Suback) String() string {
+	return fmt.Sprintf("%s, Packet ID=%d, Return Codes=%v", s.Header, s.Header.GetPacketID(), s.GetReturnCodes())
+}
+func (s *Suback) GetReturnCodes() []byte {
+	return s.ReturnCode
+}
+func (s *Suback) AddReturnCodes(ret []byte) error {
+	for _, c := range ret {
+		if c != QosAtMostOnce && c != QosAtLeastOnce && c != QosExactlyOnce && c != QosFailure {
+			return fmt.Errorf("suback/AddReturnCode: Invalid return code %d. Must be 0, 1, 2, 0x80", c)
+		}
+		s.ReturnCode = append(s.ReturnCode, c)
+	}
+	return nil
+}
+func (s *Suback) AddReturnCode(ret byte) error {
+	return s.AddReturnCodes([]byte{ret})
+}
+
+func (s *Suback) Length() int {
+	return s.Header.Length() + s.GetRemainingLength()
+}
+func (s *Suback) GetRemainingLength() int {
+	return 2 + len(s.ReturnCode)
+}
+func (s *Suback) encode(dst []byte) (total int, err error) {
+	var (
+		n int
+	)
+	hl := s.Header.Length()
+	ml := s.GetRemainingLength()
+	if len(dst) < hl+ml {
+		return 0, fmt.Errorf("suback/Encode: Insufficient buffer size. Expecting %d, got %d", hl+ml, len(dst))
+	}
+	s.Header.SetRemainingLength(uint64(ml))
+	total = 0
+	n, err = s.Header.encode(dst[total:])
+	total += n
+	if err != nil {
+		return
+	}
+	binary.BigEndian.PutUint16(dst[total:], s.Header.GetPacketID())
+	total += 2
+	copy(dst[total:], s.ReturnCode)
+	total += len(s.ReturnCode)
+	return
+}
+func (s *Suback) decode(src []byte) (total int, err error) {
+	var (
+		hl int
+		ml uint64
+	)
+	total = 0
+	hl, err = s.Header.decode(src[total:])
+	total += hl
+	if err != nil {
+		return
+	}
+	s.Header.SetPacketID(binary.BigEndian.Uint16(src[total:]))
+	total += 2
+	ml, _ = binary.Uvarint(s.Header.GetRemainingLength())
+	l := int(ml) - (total - hl)
+	s.AddReturnCodes(src[total : total+l])
+	total += len(s.ReturnCode)
+	return
+}

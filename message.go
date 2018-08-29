@@ -93,6 +93,7 @@ const (
 	QosAtMostOnce byte = iota
 	QosAtLeastOnce
 	QosExactlyOnce
+	QosFailure = 0x80
 )
 
 func ValidQos(qos byte) bool {
