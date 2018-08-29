@@ -21,7 +21,7 @@ func (p Puback) String() string {
 }
 func (p *Puback) GetLength() int {
 	ml, _ := binary.Uvarint(p.Header.GetRemainingLength())
-	return p.Header.getLength() + int(ml)
+	return p.Header.Length() + int(ml)
 }
 func (p *Puback) encode(dst []byte) (total int, err error) {
 	var (
