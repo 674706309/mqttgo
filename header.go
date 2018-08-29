@@ -12,6 +12,10 @@ type Header struct {
 	PacketID uint16 //报文标识符 部分拥有
 }
 
+func (h Header) String() string {
+	return fmt.Sprintf("Type=%q, Flags=%08b, Remaining Length=%d", h.GetType(), h.GetFlag(), h.GetRemainingLength())
+}
+
 //设置类型
 func (h *Header) SetType(t uint8) {
 	h.TypeAndFlag = (t << 4) | (h.TypeAndFlag & 0xf)
@@ -51,25 +55,26 @@ func (h *Header) SetRemainingLength(x uint64) {
 func (h *Header) GetRemainingLength() []uint8 {
 	return h.RemainingLength
 }
+
+//设置报文标识符
 func (p *Header) SetPacketID(t uint16) {
 	p.PacketID = t
 }
+
+//获取报文标识符
 func (p *Header) GetPacketID() uint16 {
 	return p.PacketID
 }
 
 //获取头部长度
-func (h *Header) getLength() int {
+func (h *Header) Length() int {
 	_, l := binary.Uvarint(h.GetRemainingLength())
 	return l + 1
-}
-func (h Header) String() string {
-	return fmt.Sprintf("Type=%q, Flags=%08b, Remaining Length=%d", h.GetType(), h.GetFlag(), h.GetRemainingLength())
 }
 
 //头部编码
 func (h *Header) encode(dst []byte) (int, error) {
-	ml := h.getLength()
+	ml := h.Length()
 	if len(dst) < ml {
 		return 0, fmt.Errorf("header/Encode: Insufficient buffer size. Expecting %d, got %d", ml, len(dst))
 	}

@@ -173,8 +173,8 @@ func (c *Connect) SetPassword(t []byte) {
 func (c *Connect) GetPassword() []byte {
 	return c.Password
 }
-func (c *Connect) GetLength() int {
-	total := 0
+func (c *Connect) GetRemainingLength() (total int) {
+	total = 0
 	// n bytes protocol name
 	// 1 byte protocol version
 	// 1 byte connect flags
@@ -190,7 +190,10 @@ func (c *Connect) GetLength() int {
 	if c.GetPasswordFlag() && len(c.GetPassword()) > 0 {
 		total += 2 + len(c.GetPassword())
 	}
-	return total
+	return
+}
+func (c *Connect) Length() int {
+	return c.Header.Length() + c.GetRemainingLength()
 }
 func (c *Connect) encode(dst []byte) (int, error) {
 	if t := c.Header.GetType(); t != TYPE_CONNECT {
@@ -199,7 +202,7 @@ func (c *Connect) encode(dst []byte) (int, error) {
 	if _, ok := SupportedVersions[c.GetProtocolLevel()]; !ok {
 		return 0, fmt.Errorf("ErrInvalidProtocolVersion")
 	}
-	ml := c.GetLength()
+	ml := c.GetRemainingLength()
 	c.Header.SetRemainingLength(uint64(ml))
 	total := 0
 	n, err := c.Header.encode(dst[total:])

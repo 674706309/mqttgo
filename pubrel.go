@@ -21,7 +21,7 @@ func (p Pubrel) String() string {
 }
 func (p *Pubrel) GetLength() int {
 	ml, _ := binary.Uvarint(p.Header.GetRemainingLength())
-	return p.Header.getLength() + int(ml)
+	return p.Header.Length() + int(ml)
 }
 func (p *Pubrel) encode(dst []byte) (total int, err error) {
 	var (
