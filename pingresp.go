@@ -3,12 +3,12 @@ package mqtt
 import "fmt"
 
 type Pingresp struct {
-	Header Header
+	Header header
 }
 
 func NewPingresp() (p *Pingresp) {
+	p = &Pingresp{}
 	p.Header.SetType(TYPE_PINGRESP)
-	p.Header.SetFlag(TYPE_FLAG_PINGRESP)
 	return
 }
 func (p Pingresp) String() string {

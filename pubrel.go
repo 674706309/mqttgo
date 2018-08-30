@@ -7,22 +7,22 @@ import (
 
 type Pubrel struct {
 	//固定头
-	Header Header
+	header
 }
 
 func NewPubrel() (p *Pubrel) {
-	p.Header.SetType(TYPE_PUBREL)
-	p.Header.SetFlag(TYPE_FLAG_PUBREL)
-	p.Header.SetRemainingLength(2)
+	p = &Pubrel{}
+	p.header.SetType(TYPE_PUBREL)
+	p.header.SetRemainingLength(2)
 	return
 }
 func (p Pubrel) String() string {
-	return fmt.Sprintf("%s, PacketID=%d", p.Header, p.Header.GetPacketID())
+	return fmt.Sprintf("%s, PacketID=%d", p.header, p.header.GetPacketID())
 }
 func (p *Pubrel) Length() int {
-	return p.Header.Length() + int(p.Header.GetRemainingLength())
+	return p.header.Length() + int(p.header.GetRemainingLength())
 }
-func (p *Pubrel) encode(dst []byte) (total int, err error) {
+func (p *Pubrel) Encode(dst []byte) (total int, err error) {
 	var (
 		l, n int
 	)
@@ -31,26 +31,26 @@ func (p *Pubrel) encode(dst []byte) (total int, err error) {
 		return 0, fmt.Errorf("Suback/Encode: Insufficient buffer size. Expecting %d, got %d", l, len(dst))
 	}
 	total = 0
-	n, err = p.Header.encode(dst[total:])
+	n, err = p.encode(dst[total:])
 	total += n
 	if err != nil {
 		return
 	}
-	binary.BigEndian.PutUint16(dst[total:], p.Header.GetPacketID())
+	binary.BigEndian.PutUint16(dst[total:], p.header.GetPacketID())
 	total += 2
 	return
 }
-func (p *Pubrel) decode(src []byte) (total int, err error) {
+func (p *Pubrel) Decode(src []byte) (total int, err error) {
 	var (
 		n int
 	)
 	total = 0
-	n, err = p.Header.decode(src[total:])
+	n, err = p.decode(src[total:])
 	total += n
 	if err != nil {
 		return
 	}
-	p.Header.SetPacketID(binary.BigEndian.Uint16(src[total:]))
+	p.SetPacketID(binary.BigEndian.Uint16(src[total:]))
 	total += 2
 	return
 }

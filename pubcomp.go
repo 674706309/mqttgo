@@ -7,12 +7,12 @@ import (
 
 type Pubcomp struct {
 	//固定头
-	Header Header
+	Header header
 }
 
 func NewPubcomp() (p *Pubcomp) {
+	p = &Pubcomp{}
 	p.Header.SetType(TYPE_PUBCOMP)
-	p.Header.SetFlag(TYPE_FLAG_PUBCOMP)
 	p.Header.SetRemainingLength(2)
 	return
 }

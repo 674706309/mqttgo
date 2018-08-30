@@ -8,10 +8,10 @@ import (
 
 type Connect struct {
 	//固定头
-	Header Header
+	Header header
 	//可变头
-	ProtocolName  []byte //协议
-	ProtocolLevel byte   //协议级别
+	protocolName  []byte //协议
+	protocolLevel byte   //协议级别
 	// 7: UserNameFlag 密码标志
 	// 6: PasswordFlag 用户名标志
 	// 5: WillRetain 遗嘱保留标志
@@ -19,14 +19,14 @@ type Connect struct {
 	// 2: WillFlag 遗嘱标志
 	// 1: CleanSession 清理会话
 	// 0: Reserved 服务端必须验证CONNECT控制报文的保留标志位（第0位）是否为0，如果不为0必须断开客户端连接
-	ConnectFlags byte   //连接标志 上述具体内容
-	KeepAlive    uint16 //保持时间单位秒
+	connectFlags byte   //连接标志 上述具体内容
+	keepAlive    uint16 //保持时间单位秒
 	//有效载荷
-	ClientID    []byte //客户端标识符
-	WillTopic   []byte //遗嘱主题
-	WillMessage []byte //遗嘱消息
-	UserName    []byte //用户名
-	Password    []byte //密码
+	clientID    []byte //客户端标识符
+	willTopic   []byte //遗嘱主题
+	willMessage []byte //遗嘱消息
+	userName    []byte //用户名
+	password    []byte //密码
 }
 
 func NewConnect() (c *Connect) {
@@ -38,7 +38,7 @@ func NewConnect() (c *Connect) {
 	return
 }
 func (c *Connect) String() string {
-	return fmt.Sprintf("%s, ProtocolName=%q, ProtocolLevel=%d, ConnectFlags=%08b, KeepAlive=%d, ClientID=%q, WillTopic=%q, WillMessage=%q, UserName=%q, Password=%q",
+	return fmt.Sprintf("%s, protocolName=%q, protocolLevel=%d, connectFlags=%08b, keepAlive=%d, clientID=%q, willTopic=%q, willMessage=%q, userName=%q, password=%q",
 		c.Header,
 		c.GetProtocolName(),
 		c.GetProtocolLevel(),
@@ -52,46 +52,46 @@ func (c *Connect) String() string {
 	)
 }
 func (c *Connect) SetProtocolName(t []byte) {
-	c.ProtocolName = t
+	c.protocolName = t
 }
 func (c *Connect) GetProtocolName() []byte {
-	return c.ProtocolName
+	return c.protocolName
 }
 func (c *Connect) SetProtocolLevel(t byte) (err error) {
 	if _, ok := SupportedVersions[t]; !ok {
 		return fmt.Errorf("connect/SetVersion: Invalid version number %d", t)
 	}
-	c.ProtocolLevel = t
+	c.protocolLevel = t
 	return
 }
 func (c *Connect) GetProtocolLevel() byte {
-	return c.ProtocolLevel
+	return c.protocolLevel
 }
 func (c *Connect) SetConnectFlags(t byte) {
-	c.ConnectFlags = t
+	c.connectFlags = t
 }
 func (c *Connect) GetConnectFlags() byte {
-	return c.ConnectFlags
+	return c.connectFlags
 }
 func (c *Connect) SetCleanSession(v bool) {
 	if v {
-		c.ConnectFlags |= 0x2 // 00000010
+		c.connectFlags |= 0x2 // 00000010
 	} else {
-		c.ConnectFlags &= 253 // 11111101
+		c.connectFlags &= 253 // 11111101
 	}
 }
 func (c *Connect) GetCleanSession() bool {
-	return ((c.ConnectFlags >> 1) & 0x1) == 1
+	return ((c.connectFlags >> 1) & 0x1) == 1
 }
 func (c *Connect) SetWillFlag(v bool) {
 	if v {
-		c.ConnectFlags |= 0x4 // 00000100
+		c.connectFlags |= 0x4 // 00000100
 	} else {
-		c.ConnectFlags &= 251 // 11111011
+		c.connectFlags &= 251 // 11111011
 	}
 }
 func (c *Connect) GetWillFlag() bool {
-	return ((c.ConnectFlags >> 2) & 0x1) == 1
+	return ((c.connectFlags >> 2) & 0x1) == 1
 }
 func (c *Connect) SetWillQos(qos byte) (err error) {
 	if c.GetWillFlag() && qos != QosAtMostOnce && qos != QosAtLeastOnce && qos != QosExactlyOnce {
@@ -100,57 +100,57 @@ func (c *Connect) SetWillQos(qos byte) (err error) {
 	if !c.GetWillFlag() && qos != QosAtMostOnce {
 		return fmt.Errorf("connect/SetWillQos: Invalid QoS level %d", qos)
 	}
-	c.ConnectFlags = (c.ConnectFlags & 231) | (qos << 3) // 231 = 11100111
+	c.connectFlags = (c.connectFlags & 231) | (qos << 3) // 231 = 11100111
 	return
 }
 func (c *Connect) GetWillQos() byte {
-	return (c.ConnectFlags >> 3) & 0x3
+	return (c.connectFlags >> 3) & 0x3
 }
 func (c *Connect) SetWillRetain(v bool) {
 	if v {
-		c.ConnectFlags |= 32 // 00100000
+		c.connectFlags |= 32 // 00100000
 	} else {
-		c.ConnectFlags &= 223 // 11011111
+		c.connectFlags &= 223 // 11011111
 	}
 }
 func (c *Connect) GetWillRetain() bool {
-	return ((c.ConnectFlags >> 5) & 0x1) == 1
+	return ((c.connectFlags >> 5) & 0x1) == 1
 }
 func (c *Connect) SetUsernameFlag(v bool) {
 	if v {
-		c.ConnectFlags |= 128 // 10000000
+		c.connectFlags |= 128 // 10000000
 	} else {
-		c.ConnectFlags &= 127 // 01111111
+		c.connectFlags &= 127 // 01111111
 	}
 }
 func (c *Connect) GetUsernameFlag() bool {
-	return ((c.ConnectFlags >> 7) & 0x1) == 1
+	return ((c.connectFlags >> 7) & 0x1) == 1
 }
 func (c *Connect) SetPasswordFlag(v bool) {
 	if v {
-		c.ConnectFlags |= 64 // 01000000
+		c.connectFlags |= 64 // 01000000
 	} else {
-		c.ConnectFlags &= 191 // 10111111
+		c.connectFlags &= 191 // 10111111
 	}
 }
 func (c *Connect) GetPasswordFlag() bool {
-	return ((c.ConnectFlags >> 6) & 0x1) == 1
+	return ((c.connectFlags >> 6) & 0x1) == 1
 }
 func (c *Connect) SetKeepAlive(t uint16) {
-	c.KeepAlive = t
+	c.keepAlive = t
 }
 func (c *Connect) GetKeepAlive() uint16 {
-	return c.KeepAlive
+	return c.keepAlive
 }
 func (c *Connect) SetClientID(t []byte) (err error) {
 	if len(t) > 0 && !ValidClientID(t) {
-		return fmt.Errorf("ClientID error")
+		return fmt.Errorf("clientID error")
 	}
-	c.ClientID = t
+	c.clientID = t
 	return
 }
 func (c *Connect) GetClientID() []byte {
-	return c.ClientID
+	return c.clientID
 }
 func (c *Connect) SetWillTopic(t []byte) {
 	if len(t) > 0 {
@@ -158,10 +158,10 @@ func (c *Connect) SetWillTopic(t []byte) {
 	} else if len(c.GetWillMessage()) == 0 {
 		c.SetWillFlag(false)
 	}
-	c.WillTopic = t
+	c.willTopic = t
 }
 func (c *Connect) GetWillTopic() []byte {
-	return c.WillTopic
+	return c.willTopic
 }
 func (c *Connect) SetWillMessage(t []byte) {
 	if len(t) > 0 {
@@ -169,10 +169,10 @@ func (c *Connect) SetWillMessage(t []byte) {
 	} else if len(c.GetWillTopic()) == 0 {
 		c.SetWillFlag(false)
 	}
-	c.WillMessage = t
+	c.willMessage = t
 }
 func (c *Connect) GetWillMessage() []byte {
-	return c.WillMessage
+	return c.willMessage
 }
 func (c *Connect) SetUserName(t []byte) {
 	if len(t) > 0 {
@@ -180,10 +180,10 @@ func (c *Connect) SetUserName(t []byte) {
 	} else {
 		c.SetUsernameFlag(false)
 	}
-	c.UserName = t
+	c.userName = t
 }
 func (c *Connect) GetUserName() []byte {
-	return c.UserName
+	return c.userName
 }
 func (c *Connect) SetPassword(t []byte) {
 	if len(t) > 0 {
@@ -191,10 +191,10 @@ func (c *Connect) SetPassword(t []byte) {
 	} else {
 		c.SetPasswordFlag(false)
 	}
-	c.Password = t
+	c.password = t
 }
 func (c *Connect) GetPassword() []byte {
-	return c.Password
+	return c.password
 }
 func (c *Connect) GetRemainingLength() (total int) {
 	total = 0
@@ -218,7 +218,7 @@ func (c *Connect) GetRemainingLength() (total int) {
 func (c *Connect) Length() int {
 	return c.Header.Length() + c.GetRemainingLength()
 }
-func (c *Connect) encode(dst []byte) (total int, err error) {
+func (c *Connect) Encode(dst []byte) (total int, err error) {
 	var (
 		l, ml, n int
 	)
@@ -294,7 +294,7 @@ func (c *Connect) encodeMessage(dst []byte) (total int, err error) {
 	}
 	return
 }
-func (c *Connect) decode(src []byte) (total int, err error) {
+func (c *Connect) Decode(src []byte) (total int, err error) {
 	var (
 		n int
 	)
@@ -344,7 +344,7 @@ func (c *Connect) decodeMessage(src []byte) (total int, err error) {
 		return total, fmt.Errorf("connect/decodeMessage: Protocol violation: If the Will Flag (%t) is set to 0 the Will QoS (%d) and Will Retain (%t) fields MUST be set to zero", c.GetWillFlag(), qos, c.GetWillRetain())
 	}
 	if c.GetUsernameFlag() && !c.GetPasswordFlag() {
-		return total, fmt.Errorf("connect/decodeMessage: Username flag is set but Password flag is not set")
+		return total, fmt.Errorf("connect/decodeMessage: Username flag is set but password flag is not set")
 	}
 	if len(src[total:]) < 2 {
 		return 0, fmt.Errorf("connect/decodeMessage: Insufficient buffer size. Expecting %d, got %d", 2, len(src[total:]))

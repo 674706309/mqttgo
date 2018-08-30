@@ -5,12 +5,12 @@ import (
 )
 
 type Pingreq struct {
-	Header Header
+	Header header
 }
 
 func NewPingreq() (p *Pingreq) {
+	p = &Pingreq{}
 	p.Header.SetType(TYPE_PINGREQ)
-	p.Header.SetFlag(TYPE_FLAG_PINGREQ)
 	return
 }
 func (p Pingreq) String() string {

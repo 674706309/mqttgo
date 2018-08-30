@@ -6,12 +6,12 @@ import (
 )
 
 type UnSuback struct {
-	Header Header
+	Header header
 }
 
 func NewUnSuback() (u *UnSuback) {
+	u = &UnSuback{}
 	u.Header.SetType(TYPE_SUBACK)
-	u.Header.SetFlag(TYPE_FLAG_SUBACK)
 	return
 }
 func (u UnSuback) String() string {
@@ -23,7 +23,7 @@ func (u *UnSuback) Length() int {
 func (u *UnSuback) GetRemainingLength() int {
 	return 2
 }
-func (u *UnSuback) encode(dst []byte) (total int, err error) {
+func (u *UnSuback) Encode(dst []byte) (total int, err error) {
 	var (
 		n int
 	)
@@ -37,7 +37,7 @@ func (u *UnSuback) encode(dst []byte) (total int, err error) {
 	total += n
 	return
 }
-func (u *UnSuback) decode(src []byte) (total int, err error) {
+func (u *UnSuback) Decode(src []byte) (total int, err error) {
 	var (
 		n int
 	)

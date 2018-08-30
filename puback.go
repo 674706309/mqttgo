@@ -7,12 +7,12 @@ import (
 
 type Puback struct {
 	//固定头
-	Header Header
+	Header header
 }
 
 func NewPuback() (p *Puback) {
+	p = &Puback{}
 	p.Header.SetType(TYPE_PUBACK)
-	p.Header.SetFlag(TYPE_FLAG_PUBACK)
 	p.Header.SetRemainingLength(2)
 	return
 }

@@ -7,7 +7,7 @@ import (
 
 type Publish struct {
 	//固定头
-	Header Header
+	Header header
 	//可变头
 	TopicName []byte //主题名
 	//有效载荷
@@ -15,11 +15,12 @@ type Publish struct {
 }
 
 func NewPublish() (c *Publish) {
+	c = &Publish{}
 	c.Header.SetType(TYPE_PUBLISH)
 	return
 }
 func (p Publish) String() string {
-	return fmt.Sprintf("%s, Topic=%q, PacketID=%d, QoS=%d, Retained=%t, Dup=%t, Payload=%d",
+	return fmt.Sprintf("%s, Topic=%s, PacketID=%d, QoS=%d, Retained=%t, Dup=%t, Payload=%d",
 		p.Header, p.GetTopicName(), p.Header.GetPacketID(), p.GetQoS(), p.GetRetain(), p.GetDup(), p.GetPayload())
 }
 func (p *Publish) SetDup(t bool) {
@@ -71,13 +72,16 @@ func (p *Publish) GetPayload() []byte {
 	return p.Payload
 }
 func (p *Publish) Length() int {
+	return p.Header.Length() + p.GetRemainingLength()
+}
+func (p *Publish) GetRemainingLength() int {
 	total := 2 + len(p.GetTopicName()) + len(p.GetPayload())
 	if p.GetQoS() != 0 {
 		total += 2
 	}
 	return total
 }
-func (p *Publish) encode(dst []byte) (total int, err error) {
+func (p *Publish) Encode(dst []byte) (total int, err error) {
 	var (
 		ml, n int
 	)
@@ -87,7 +91,7 @@ func (p *Publish) encode(dst []byte) (total int, err error) {
 	if len(p.GetPayload()) == 0 {
 		return 0, fmt.Errorf("publish/Encode: Payload is empty")
 	}
-	ml = p.Length()
+	ml = p.GetRemainingLength()
 	p.Header.SetRemainingLength(uint64(ml))
 	total = 0
 	n, err = p.Header.encode(dst[total:])
@@ -108,7 +112,7 @@ func (p *Publish) encode(dst []byte) (total int, err error) {
 	total += len(p.GetPayload())
 	return total, nil
 }
-func (p *Publish) decode(src []byte) (total int, err error) {
+func (p *Publish) Decode(src []byte) (total int, err error) {
 	var (
 		temp     []byte
 		l, hl, n int

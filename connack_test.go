@@ -28,7 +28,7 @@ func TestConnackMessageDecode(t *testing.T) {
 
 	c := NewConnack()
 
-	n, err := c.decode(msgBytes)
+	n, err := c.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
@@ -47,7 +47,7 @@ func TestConnackMessageDecode2(t *testing.T) {
 
 	c := NewConnack()
 
-	_, err := c.decode(msgBytes)
+	_, err := c.Decode(msgBytes)
 	require.Error(t, err, "Error decoding message.")
 }
 
@@ -61,7 +61,7 @@ func TestConnackMessageDecode3(t *testing.T) {
 
 	c := NewConnack()
 
-	_, err := c.decode(msgBytes)
+	_, err := c.Decode(msgBytes)
 	require.Error(t, err, "Error decoding message.")
 }
 
@@ -76,7 +76,7 @@ func TestConnackMessageDecode4(t *testing.T) {
 
 	c := NewConnack()
 
-	_, err := c.decode(msgBytes)
+	_, err := c.Decode(msgBytes)
 	require.Error(t, err, "Error decoding message.")
 }
 
@@ -91,7 +91,7 @@ func TestConnackMessageDecode5(t *testing.T) {
 
 	c := NewConnack()
 
-	_, err := c.decode(msgBytes)
+	_, err := c.Decode(msgBytes)
 	require.Error(t, err, "Error decoding message.")
 }
 
@@ -108,7 +108,7 @@ func TestConnackMessageEncode(t *testing.T) {
 	c.SetSessionPresent(true)
 
 	dst := make([]byte, 10)
-	n, err := c.encode(dst)
+	n, err := c.Encode(dst)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error encoding message.")
@@ -126,19 +126,19 @@ func TestConnackDecodeEncodeEquiv(t *testing.T) {
 	}
 
 	c := NewConnack()
-	n, err := c.decode(msgBytes)
+	n, err := c.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
 
 	dst := make([]byte, 100)
-	n2, err := c.encode(dst)
+	n2, err := c.Encode(dst)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n2, "Error decoding message.")
 	require.Equal(t, msgBytes, dst[:n2], "Error decoding message.")
 
-	n3, err := c.decode(dst)
+	n3, err := c.Decode(dst)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n3, "Error decoding message.")

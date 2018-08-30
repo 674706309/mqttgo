@@ -1,1 +1,146 @@
 package mqtt
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
+
+func TestUnsubscribeMessageFields(t *testing.T) {
+	msg := NewUnSubscribe()
+
+	msg.Header.SetPacketID(100)
+	require.Equal(t, 100, int(msg.Header.GetPacketID()), "Error setting packet ID.")
+
+	msg.AddTopic([]byte("/a/b/#/c"))
+	require.Equal(t, 1, len(msg.GetTopicFilter()), "Error adding topic.")
+
+	msg.AddTopic([]byte("/a/b/#/c"))
+	require.Equal(t, 1, len(msg.GetTopicFilter()), "Error adding duplicate topic.")
+
+	msg.RemoveTopic([]byte("/a/b/#/c"))
+	_, found := msg.TopicExists([]byte("/a/b/#/c"))
+	require.False(t, found, "Topic should not exist.")
+	_, found = msg.TopicExists([]byte("/a/b/#/c"))
+	require.False(t, found, "Topic should not exist.")
+
+	msg.RemoveTopic([]byte("/a/b/#/c"))
+	_, found = msg.TopicExists([]byte("/a/b/#/c"))
+	require.False(t, found, "Topic should not exist.")
+}
+
+func TestUnsubscribeMessageDecode(t *testing.T) {
+	msgBytes := []byte{
+		byte(TYPE_UNSUBSCRIBE<<4) | 2,
+		33,
+		0, // packet ID MSB (0)
+		7, // packet ID LSB (7)
+		0, // topic name MSB (0)
+		7, // topic name LSB (7)
+		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		0, // topic name MSB (0)
+		8, // topic name LSB (8)
+		'/', 'a', '/', 'b', '/', '#', '/', 'c',
+		0,  // topic name MSB (0)
+		10, // topic name LSB (10)
+		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
+	}
+
+	msg := NewUnSubscribe()
+	n, err := msg.Decode(msgBytes)
+
+	require.NoError(t, err, "Error decoding message.")
+	require.Equal(t, len(msgBytes), n, "Error decoding message.")
+	require.Equal(t, TYPE_UNSUBSCRIBE, msg.Header.GetType(), "Error decoding message.")
+	require.Equal(t, 3, len(msg.GetTopicFilter()), "Error decoding topics.")
+	_, found := msg.TopicExists([]byte("/a/b/#/c"))
+	require.True(t, found, "Topic 'surgemq' should exist.")
+	_, found = msg.TopicExists([]byte("/a/b/#/c"))
+	require.True(t, found, "Topic '/a/b/#/c' should exist.")
+	_, found = msg.TopicExists([]byte("/a/b/#/c"))
+	require.True(t, found, "Topic '/a/b/#/c' should exist.")
+}
+
+// test empty topic list
+func TestUnsubscribeMessageDecode2(t *testing.T) {
+	msgBytes := []byte{
+		byte(TYPE_UNSUBSCRIBE<<4) | 2,
+		2,
+		0, // packet ID MSB (0)
+		7, // packet ID LSB (7)
+	}
+
+	msg := NewUnSubscribe()
+	_, err := msg.Decode(msgBytes)
+
+	require.Error(t, err)
+}
+
+func TestUnsubscribeMessageEncode(t *testing.T) {
+	msgBytes := []byte{
+		byte(TYPE_UNSUBSCRIBE<<4) | 2,
+		33,
+		0, // packet ID MSB (0)
+		7, // packet ID LSB (7)
+		0, // topic name MSB (0)
+		7, // topic name LSB (7)
+		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		0, // topic name MSB (0)
+		8, // topic name LSB (8)
+		'/', 'a', '/', 'b', '/', '#', '/', 'c',
+		0,  // topic name MSB (0)
+		10, // topic name LSB (10)
+		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
+	}
+
+	msg := NewUnSubscribe()
+	msg.Header.SetPacketID(7)
+	msg.AddTopic([]byte("surgemq"))
+	msg.AddTopic([]byte("/a/b/#/c"))
+	msg.AddTopic([]byte("/a/b/#/cdd"))
+
+	dst := make([]byte, 100)
+	n, err := msg.Encode(dst)
+
+	require.NoError(t, err, "Error decoding message.")
+	require.Equal(t, len(msgBytes), n, "Error decoding message.")
+	require.Equal(t, msgBytes, dst[:n], "Error decoding message.")
+}
+
+// test to ensure encoding and decoding are the same
+// decode, encode, and decode again
+func TestUnsubscribeDecodeEncodeEquiv(t *testing.T) {
+	msgBytes := []byte{
+		byte(TYPE_UNSUBSCRIBE<<4) | 2,
+		33,
+		0, // packet ID MSB (0)
+		7, // packet ID LSB (7)
+		0, // topic name MSB (0)
+		7, // topic name LSB (7)
+		's', 'u', 'r', 'g', 'e', 'm', 'q',
+		0, // topic name MSB (0)
+		8, // topic name LSB (8)
+		'/', 'a', '/', 'b', '/', '#', '/', 'c',
+		0,  // topic name MSB (0)
+		10, // topic name LSB (10)
+		'/', 'a', '/', 'b', '/', '#', '/', 'c', 'd', 'd',
+	}
+
+	msg := NewUnSubscribe()
+	n, err := msg.Decode(msgBytes)
+
+	require.NoError(t, err, "Error decoding message.")
+	require.Equal(t, len(msgBytes), n, "Error decoding message.")
+
+	dst := make([]byte, 100)
+	n2, err := msg.Encode(dst)
+
+	require.NoError(t, err, "Error decoding message.")
+	require.Equal(t, len(msgBytes), n2, "Error decoding message.")
+	require.Equal(t, msgBytes, dst[:n2], "Error decoding message.")
+
+	n3, err := msg.Decode(dst)
+
+	require.NoError(t, err, "Error decoding message.")
+	require.Equal(t, len(msgBytes), n3, "Error decoding message.")
+}

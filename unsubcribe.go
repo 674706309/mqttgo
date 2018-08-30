@@ -8,14 +8,14 @@ import (
 
 type UnSubscribe struct {
 	//固定头
-	Header Header
+	Header header
 
 	TopicFilter [][]byte
 }
 
 func NewUnSubscribe() (u *UnSubscribe) {
+	u = &UnSubscribe{}
 	u.Header.SetType(TYPE_UNSUBSCRIBE)
-	u.Header.SetFlag(TYPE_FLAG_UNSUBSCRIBE)
 	return
 }
 func (u UnSubscribe) String() (str string) {
@@ -68,7 +68,7 @@ func (u *UnSubscribe) GetRemainingLength() (total int) {
 	}
 	return
 }
-func (u *UnSubscribe) encode(dst []byte) (total int, err error) {
+func (u *UnSubscribe) Encode(dst []byte) (total int, err error) {
 	var (
 		hl, ml, n int
 		t         []byte
@@ -96,7 +96,7 @@ func (u *UnSubscribe) encode(dst []byte) (total int, err error) {
 	}
 	return
 }
-func (u *UnSubscribe) decode(src []byte) (total int, err error) {
+func (u *UnSubscribe) Decode(src []byte) (total int, err error) {
 	var (
 		hl, ml, n int
 		temp      []byte

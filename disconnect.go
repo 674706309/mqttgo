@@ -3,7 +3,7 @@ package mqtt
 import "fmt"
 
 type Disconnect struct {
-	Header Header
+	Header header
 }
 
 func NewDisconnect() (p *Disconnect) {

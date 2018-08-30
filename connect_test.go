@@ -134,7 +134,7 @@ func TestConnectMessageDecode(t *testing.T) {
 	}
 
 	conn := NewConnect()
-	n, err := conn.decode(msgBytes)
+	n, err := conn.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
@@ -177,7 +177,7 @@ func TestConnectMessageDecode2(t *testing.T) {
 	}
 
 	conn := NewConnect()
-	_, err := conn.decode(msgBytes)
+	_, err := conn.Decode(msgBytes)
 
 	require.Error(t, err)
 }
@@ -213,7 +213,7 @@ func TestConnectMessageDecode3(t *testing.T) {
 	}
 
 	conn := NewConnect()
-	n, err := conn.decode(msgBytes)
+	n, err := conn.Decode(msgBytes)
 
 	require.NoError(t, err)
 	require.Equal(t, 62, n)
@@ -248,7 +248,7 @@ func TestConnectMessageDecode4(t *testing.T) {
 	}
 
 	conn := NewConnect()
-	_, err := conn.decode(msgBytes)
+	_, err := conn.Decode(msgBytes)
 
 	require.Error(t, err)
 }
@@ -294,7 +294,7 @@ func TestConnectMessageEncode(t *testing.T) {
 	conn.SetPassword([]byte("verysecret"))
 
 	dst := make([]byte, 100)
-	n, err := conn.encode(dst)
+	n, err := conn.Encode(dst)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
@@ -303,7 +303,7 @@ func TestConnectMessageEncode(t *testing.T) {
 }
 
 // test to ensure encoding and decoding are the same
-// decode, encode, and decode again
+// Decode, Encode, and Decode again
 func TestConnectDecodeEncodeEquiv(t *testing.T) {
 	msgBytes := []byte{
 		byte(TYPE_CONNECT) << 4,
@@ -333,19 +333,19 @@ func TestConnectDecodeEncodeEquiv(t *testing.T) {
 	}
 
 	conn := NewConnect()
-	n, err := conn.decode(msgBytes)
+	n, err := conn.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
 
 	dst := make([]byte, 120)
-	n2, err := conn.encode(dst)
+	n2, err := conn.Encode(dst)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n2, "Error decoding message.")
 	require.Equal(t, msgBytes, dst[:n2], "Error decoding message.")
 
-	n3, err := conn.decode(dst)
+	n3, err := conn.Decode(dst)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n3, "Error decoding message.")

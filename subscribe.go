@@ -8,15 +8,15 @@ import (
 
 type Subscribe struct {
 	//固定头
-	Header Header
+	Header header
 
 	TopicFilter  [][]byte
 	RequestedQoS []byte
 }
 
 func NewSubscribe() (s *Subscribe) {
+	s = &Subscribe{}
 	s.Header.SetType(TYPE_SUBSCRIBE)
-	s.Header.SetFlag(TYPE_FLAG_SUBSCRIBE)
 	return
 }
 func (s Subscribe) String() (str string) {
@@ -81,7 +81,7 @@ func (s *Subscribe) GetRemainingLength() (total int) {
 	}
 	return
 }
-func (s *Subscribe) encode(dst []byte) (total int, err error) {
+func (s *Subscribe) Encode(dst []byte) (total int, err error) {
 	var (
 		ml, l, n int
 		qos      []byte
@@ -112,7 +112,7 @@ func (s *Subscribe) encode(dst []byte) (total int, err error) {
 	}
 	return
 }
-func (s *Subscribe) decode(src []byte) (total int, err error) {
+func (s *Subscribe) Decode(src []byte) (total int, err error) {
 	var (
 		hl, ml, n int
 		temp      []byte

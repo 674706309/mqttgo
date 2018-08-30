@@ -6,7 +6,7 @@ import (
 )
 
 func TestMessageHeaderFields(t *testing.T) {
-	header := &Header{}
+	header := &header{}
 
 	header.SetRemainingLength(33)
 	require.Equal(t, uint64(33), header.GetRemainingLength())
@@ -29,7 +29,7 @@ func TestMessageHeaderFields(t *testing.T) {
 // Not enough bytes
 func TestMessageHeaderDecode(t *testing.T) {
 	buf := []byte{0x6f, 193, 2}
-	header := &Header{}
+	header := &header{}
 
 	_, err := header.decode(buf)
 	require.Error(t, err)
@@ -38,7 +38,7 @@ func TestMessageHeaderDecode(t *testing.T) {
 // Remaining length too big
 func TestMessageHeaderDecode2(t *testing.T) {
 	buf := []byte{0x62, 0xff, 0xff, 0xff, 0xff}
-	header := &Header{}
+	header := &header{}
 
 	_, err := header.decode(buf)
 	require.Error(t, err)
@@ -46,7 +46,7 @@ func TestMessageHeaderDecode2(t *testing.T) {
 
 func TestMessageHeaderDecode3(t *testing.T) {
 	buf := []byte{0x62, 0xff}
-	header := &Header{}
+	header := &header{}
 
 	_, err := header.decode(buf)
 	require.Error(t, err)
@@ -54,8 +54,8 @@ func TestMessageHeaderDecode3(t *testing.T) {
 
 func TestMessageHeaderDecode4(t *testing.T) {
 	buf := []byte{0x62, 0xff, 0xff, 0xff, 0x7f}
-	header := &Header{
-		TypeAndFlag: byte(6<<4 | 2),
+	header := &header{
+		typeAndFlag: byte(6<<4 | 2),
 	}
 
 	n, err := header.decode(buf)
@@ -67,8 +67,8 @@ func TestMessageHeaderDecode4(t *testing.T) {
 
 func TestMessageHeaderDecode5(t *testing.T) {
 	buf := []byte{0x62, 0xff, 0x7f}
-	header := &Header{
-		TypeAndFlag: byte(6<<4 | 2),
+	header := &header{
+		typeAndFlag: byte(6<<4 | 2),
 		//mtype:      6,
 		//flags:      2,
 	}
@@ -79,7 +79,7 @@ func TestMessageHeaderDecode5(t *testing.T) {
 }
 
 func TestMessageHeaderEncode1(t *testing.T) {
-	header := &Header{}
+	header := &header{}
 	headerBytes := []byte{0x62, 193, 2}
 
 	err := header.SetType(TYPE_PUBREL)
@@ -96,7 +96,7 @@ func TestMessageHeaderEncode1(t *testing.T) {
 }
 
 func TestMessageHeaderEncode3(t *testing.T) {
-	header := &Header{}
+	header := &header{}
 	headerBytes := []byte{0x62, 0xff, 0xff, 0xff, 0x7f}
 
 	err := header.SetType(TYPE_PUBREL)

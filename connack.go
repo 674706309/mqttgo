@@ -2,47 +2,47 @@ package mqtt
 
 import "fmt"
 
-type Connack struct {
+type connack struct {
 	//固定头
-	Header Header
+	header
 	//可变头
-	AcknowledgeFlags uint8
-	ReturnCode       uint8 //返回码
+	acknowledgeFlags uint8
+	returnCode       uint8 //返回码
 }
 
-func NewConnack() (c *Connack) {
-	c = &Connack{}
-	c.Header.SetType(TYPE_CONNACK)
-	c.Header.SetRemainingLength(2)
+func NewConnack() (c *connack) {
+	c = &connack{}
+	c.SetType(TYPE_CONNACK)
+	c.header.SetRemainingLength(2)
 	return
 }
-func (c Connack) String() string {
-	return fmt.Sprintf("%s, SessionPresent=%t, ReturnCode=%q\n", c.Header, c.GetSessionPresent(), c.GetReturnCode())
+func (c connack) String() string {
+	return fmt.Sprintf("%s, SessionPresent=%t, ReturnCode=%q\n", c.header, c.GetSessionPresent(), c.GetReturnCode())
 }
-func (c *Connack) SetSessionPresent(v bool) {
+func (c *connack) SetSessionPresent(v bool) {
 	if v {
-		c.AcknowledgeFlags |= 0x1 // 00000001
+		c.acknowledgeFlags |= 0x1 // 00000001
 	} else {
-		c.AcknowledgeFlags &= 254 // 11111110
+		c.acknowledgeFlags &= 254 // 11111110
 	}
 }
 
-func (c *Connack) GetSessionPresent() bool {
-	return (c.AcknowledgeFlags & 0x1) == 1
+func (c *connack) GetSessionPresent() bool {
+	return (c.acknowledgeFlags & 0x1) == 1
 }
-func (c *Connack) SetReturnCode(code uint8) {
-	c.ReturnCode = code
+func (c *connack) SetReturnCode(code uint8) {
+	c.returnCode = code
 }
-func (c *Connack) GetReturnCode() uint8 {
-	return c.ReturnCode
+func (c *connack) GetReturnCode() uint8 {
+	return c.returnCode
 }
-func (c *Connack) Length() int {
-	return c.Header.Length() + c.GetRemainingLength()
+func (c *connack) Length() int {
+	return c.header.Length() + c.GetRemainingLength()
 }
-func (c *Connack) GetRemainingLength() int {
+func (c *connack) GetRemainingLength() int {
 	return 2
 }
-func (c *Connack) encode(dst []byte) (total int, err error) {
+func (c *connack) Encode(dst []byte) (total int, err error) {
 	var (
 		l, ml int
 	)
@@ -51,9 +51,9 @@ func (c *Connack) encode(dst []byte) (total int, err error) {
 		return 0, fmt.Errorf("connack/Encode: Insufficient buffer size. Expecting %d, got %d", l, len(dst))
 	}
 	ml = c.GetRemainingLength()
-	c.Header.SetRemainingLength(uint64(ml))
+	c.SetRemainingLength(uint64(ml))
 	total = 0
-	n, err := c.Header.encode(dst[total:])
+	n, err := c.encode(dst[total:])
 	total += n
 	if err != nil {
 		return
@@ -69,13 +69,13 @@ func (c *Connack) encode(dst []byte) (total int, err error) {
 	total++
 	return
 }
-func (c *Connack) decode(src []byte) (total int, err error) {
+func (c *connack) Decode(src []byte) (total int, err error) {
 	var (
 		n int
 		b byte
 	)
 	total = 0
-	n, err = c.Header.decode(src)
+	n, err = c.decode(src)
 	total += n
 	if err != nil {
 		return

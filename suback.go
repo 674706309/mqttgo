@@ -6,14 +6,14 @@ import (
 )
 
 type Suback struct {
-	Header Header
+	Header header
 
 	ReturnCode []byte
 }
 
 func NewSuback() (s *Suback) {
+	s = &Suback{}
 	s.Header.SetType(TYPE_SUBACK)
-	s.Header.SetFlag(TYPE_FLAG_SUBACK)
 	return
 }
 func (s Suback) String() string {
@@ -41,7 +41,7 @@ func (s *Suback) Length() int {
 func (s *Suback) GetRemainingLength() int {
 	return 2 + len(s.ReturnCode)
 }
-func (s *Suback) encode(dst []byte) (total int, err error) {
+func (s *Suback) Encode(dst []byte) (total int, err error) {
 	var (
 		ml, l, n int
 	)
@@ -63,7 +63,7 @@ func (s *Suback) encode(dst []byte) (total int, err error) {
 	total += len(s.ReturnCode)
 	return
 }
-func (s *Suback) decode(src []byte) (total int, err error) {
+func (s *Suback) Decode(src []byte) (total int, err error) {
 	var (
 		hl int
 	)

@@ -5,89 +5,89 @@ import (
 	"fmt"
 )
 
-type Header struct {
-	TypeAndFlag     byte
-	RemainingLength []byte
+type header struct {
+	typeAndFlag     byte
+	remainingLength []byte
 
-	PacketID uint16 //报文标识符 部分拥有
+	packetID uint16 //报文标识符 部分拥有
 }
 
-func (h Header) String() string {
-	return fmt.Sprintf("Type=%08d, Flags=%08d, RemainingLength=%d", h.GetType(), h.GetFlag(), h.GetRemainingLength())
+func (h header) String() string {
+	return fmt.Sprintf("Type=%d, Flags=%d, remainingLength=%d", h.GetType(), h.GetFlag(), h.GetRemainingLength())
 }
 
 //设置类型
-func (h *Header) SetType(t byte) (err error) {
+func (h *header) SetType(t byte) (err error) {
 	if !ValidType(t) {
 		return fmt.Errorf("header/SetType: Invalid control packet type %d", t)
 	}
-	h.TypeAndFlag = (t << 4) | (h.TypeAndFlag & 0xf)
+	h.typeAndFlag = (t << 4) | (h.typeAndFlag & 0xf)
 	h.SetFlag(DefaultFlags(h.GetType()))
 	return
 }
 
 //获取类型
-func (h *Header) GetType() byte {
-	return h.TypeAndFlag >> 4
+func (h *header) GetType() byte {
+	return h.typeAndFlag >> 4
 }
 
 //设置标志
-func (h *Header) SetFlag(t byte) (err error) {
-	if !(DefaultFlags(h.GetType()) == t) {
+func (h *header) SetFlag(t byte) (err error) {
+	if h.GetType() != TYPE_PUBLISH && !(DefaultFlags(h.GetType()) == t) {
 		return fmt.Errorf("Flag error")
 	}
-	h.TypeAndFlag = (t & 0xf) | (h.TypeAndFlag & 0xf0)
+	h.typeAndFlag = (t & 0xf) | (h.typeAndFlag & 0xf0)
 	return
 }
 
 //获取标志
-func (h *Header) GetFlag() byte {
-	return h.TypeAndFlag & 0xf
+func (h *header) GetFlag() byte {
+	return h.typeAndFlag & 0xf
 }
 
 //设置类型和标志
-func (h *Header) SetTypeAndFlag(t byte) {
-	h.TypeAndFlag = t
+func (h *header) SetTypeAndFlag(t byte) {
+	h.typeAndFlag = t
 }
 
 //获取类型和标志
-func (h *Header) GetTypeAndFlag() byte {
-	return h.TypeAndFlag
+func (h *header) GetTypeAndFlag() byte {
+	return h.typeAndFlag
 }
 
 //设置剩余长度
-func (h *Header) SetRemainingLength(t uint64) (err error) {
+func (h *header) SetRemainingLength(t uint64) (err error) {
 	if t > uint64(MaxRemainingLength) || t < 0 {
 		return fmt.Errorf("header/SetLength: Remaining length (%d) out of bound (max %d, min 0)", t, MaxRemainingLength)
 	}
-	h.RemainingLength = make([]byte, 8)
-	binary.PutUvarint(h.RemainingLength, t)
+	h.remainingLength = make([]byte, 8)
+	binary.PutUvarint(h.remainingLength, t)
 	return
 }
 
 //获取剩余长度
-func (h *Header) GetRemainingLength() uint64 {
-	l, _ := binary.Uvarint(h.RemainingLength)
+func (h *header) GetRemainingLength() uint64 {
+	l, _ := binary.Uvarint(h.remainingLength)
 	return l
 }
 
 //设置报文标识符
-func (p *Header) SetPacketID(t uint16) {
-	p.PacketID = t
+func (h *header) SetPacketID(t uint16) {
+	h.packetID = t
 }
 
 //获取报文标识符
-func (p *Header) GetPacketID() uint16 {
-	return p.PacketID
+func (h *header) GetPacketID() uint16 {
+	return h.packetID
 }
 
 //获取头部长度
-func (h *Header) Length() int {
-	return 1 + int(h.GetRemainingLength())
+func (h *header) Length() int {
+	return 2
 }
 
 //头部编码
-func (h *Header) encode(dst []byte) (total int, err error) {
+func (h *header) encode(dst []byte) (total int, err error) {
 	var (
 		l uint64
 		n int
@@ -108,7 +108,7 @@ func (h *Header) encode(dst []byte) (total int, err error) {
 }
 
 //头部解码
-func (h *Header) decode(src []byte) (total int, err error) {
+func (h *header) decode(src []byte) (total int, err error) {
 	var (
 		n  int
 		ml uint64
