@@ -126,8 +126,15 @@ func (h *Header) decode(src []byte) (total int, err error) {
 	}
 	total++
 	ml, n = binary.Uvarint(src[total:])
-	total += n
+	if ml == 0 {
+		if n == 0 {
+			return total, fmt.Errorf("header/Decode: binaryUvarint buf is short")
+		} else if n < 0 {
+			return total, fmt.Errorf("header/Decode: binaryUvarint is over")
+		}
+	}
 	h.SetRemainingLength(ml)
+	total += n
 	if ml > uint64(MaxRemainingLength) || ml < 0 {
 		return total, fmt.Errorf("header/Decode: Remaining length (%d) out of bound (max %d, min 0)", ml, MaxRemainingLength)
 	}

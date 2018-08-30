@@ -112,7 +112,7 @@ func (u *UnSubscribe) decode(src []byte) (total int, err error) {
 	total += 2
 	ml = int(u.Header.GetRemainingLength()) - (total - hl)
 	for ml > 0 {
-		n, err = ReadBytes(src[total:], temp)
+		temp, n, err = ReadBytes(src[total:])
 		total += n
 		if err != nil {
 			return

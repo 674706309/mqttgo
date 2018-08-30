@@ -127,7 +127,7 @@ func (s *Subscribe) decode(src []byte) (total int, err error) {
 	total += 2
 	ml = -(total - hl)
 	for ml > 0 {
-		n, err = ReadBytes(src[total:], temp)
+		temp, n, err = ReadBytes(src[total:])
 		total += n
 		if err != nil {
 			return

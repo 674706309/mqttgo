@@ -5,9 +5,9 @@ import (
 	"fmt"
 )
 
-func ReadBytes(buf []byte, b []byte) (total int, err error) {
+func ReadBytes(buf []byte) (b []byte, total int, err error) {
 	if len(buf) < 2 {
-		return 0, fmt.Errorf("utils/readLPBytes: Insufficient buffer size. Expecting %d, got %d", 2, len(buf))
+		return nil, 0, fmt.Errorf("utils/readLPBytes: Insufficient buffer size. Expecting %d, got %d", 2, len(buf))
 	}
 	var (
 		n int
@@ -16,10 +16,10 @@ func ReadBytes(buf []byte, b []byte) (total int, err error) {
 	n = int(binary.BigEndian.Uint16(buf))
 	total += 2
 	if len(buf) < n {
-		return total, fmt.Errorf("utils/readLPBytes: Insufficient buffer size. Expecting %d, got %d", n, len(buf))
+		return nil, total, fmt.Errorf("utils/readLPBytes: Insufficient buffer size. Expecting %d, got %d", n, len(buf))
 	}
 	total += n
-	copy(buf[2:total], b)
+	b = buf[2:total]
 	return
 }
 func WriteBytes(buf []byte, b []byte) (total int, err error) {

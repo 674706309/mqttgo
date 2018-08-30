@@ -32,8 +32,8 @@ type Connect struct {
 func NewConnect() (c *Connect) {
 	c = &Connect{}
 	c.Header.SetType(TYPE_CONNECT)
-	c.Header.SetFlag(TYPE_FLAG_CONNECT)
-	c.SetProtocolName(bytes.Join([][]byte{{0x00, 0x04}, []byte(PROTOCOL)}, []byte("")))
+	//设置默认协议
+	c.SetProtocolName(bytes.Join([][]byte{[]byte(PROTOCOL)}, []byte("")))
 	c.SetProtocolLevel(PROTOCOL_LEVEL)
 	return
 }
@@ -57,8 +57,12 @@ func (c *Connect) SetProtocolName(t []byte) {
 func (c *Connect) GetProtocolName() []byte {
 	return c.ProtocolName
 }
-func (c *Connect) SetProtocolLevel(t byte) {
+func (c *Connect) SetProtocolLevel(t byte) (err error) {
+	if _, ok := SupportedVersions[t]; !ok {
+		return fmt.Errorf("connect/SetVersion: Invalid version number %d", t)
+	}
 	c.ProtocolLevel = t
+	return
 }
 func (c *Connect) GetProtocolLevel() byte {
 	return c.ProtocolLevel
@@ -149,26 +153,44 @@ func (c *Connect) GetClientID() []byte {
 	return c.ClientID
 }
 func (c *Connect) SetWillTopic(t []byte) {
+	if len(t) > 0 {
+		c.SetWillFlag(true)
+	} else if len(c.GetWillMessage()) == 0 {
+		c.SetWillFlag(false)
+	}
 	c.WillTopic = t
 }
 func (c *Connect) GetWillTopic() []byte {
 	return c.WillTopic
 }
 func (c *Connect) SetWillMessage(t []byte) {
+	if len(t) > 0 {
+		c.SetWillFlag(true)
+	} else if len(c.GetWillTopic()) == 0 {
+		c.SetWillFlag(false)
+	}
 	c.WillMessage = t
 }
 func (c *Connect) GetWillMessage() []byte {
 	return c.WillMessage
 }
 func (c *Connect) SetUserName(t []byte) {
-	c.SetUsernameFlag(true)
+	if len(t) > 0 {
+		c.SetUsernameFlag(true)
+	} else {
+		c.SetUsernameFlag(false)
+	}
 	c.UserName = t
 }
 func (c *Connect) GetUserName() []byte {
 	return c.UserName
 }
 func (c *Connect) SetPassword(t []byte) {
-	c.SetPasswordFlag(true)
+	if len(t) > 0 {
+		c.SetPasswordFlag(true)
+	} else {
+		c.SetPasswordFlag(false)
+	}
 	c.Password = t
 }
 func (c *Connect) GetPassword() []byte {
@@ -208,7 +230,7 @@ func (c *Connect) encode(dst []byte) (total int, err error) {
 		return 0, fmt.Errorf("connect/Encode: Insufficient buffer size. Expecting %d, got %d", l, len(dst))
 	}
 	ml = c.GetRemainingLength()
-	c.Header.SetRemainingLength(uint64(ml))
+	c.Header.SetRemainingLength(uint64(ml) + 1)
 	total = 0
 	n, err = c.Header.encode(dst[total:])
 	total += n
@@ -287,7 +309,6 @@ func (c *Connect) decode(src []byte) (total int, err error) {
 	if err != nil {
 		return
 	}
-
 	return
 }
 
@@ -298,7 +319,9 @@ func (c *Connect) decodeMessage(src []byte) (total int, err error) {
 		qos  byte
 	)
 	n, total = 0, 0
-	n, err = ReadBytes(src[total:], temp)
+	//temp = make([]byte, 2)
+	temp, n, err = ReadBytes(src[total:])
+	c.SetProtocolName(temp)
 	total += n
 	if err != nil {
 		return
@@ -328,7 +351,7 @@ func (c *Connect) decodeMessage(src []byte) (total int, err error) {
 	}
 	c.SetKeepAlive(binary.BigEndian.Uint16(src[total:]))
 	total += 2
-	n, err = ReadBytes(src[total:], temp)
+	temp, n, err = ReadBytes(src[total:])
 	c.SetClientID(temp)
 	total += n
 	if err != nil {
@@ -341,13 +364,13 @@ func (c *Connect) decodeMessage(src []byte) (total int, err error) {
 		return total, fmt.Errorf("ErrIdentifierRejected")
 	}
 	if c.GetWillFlag() {
-		n, err = ReadBytes(src[total:], temp)
+		temp, n, err = ReadBytes(src[total:])
 		c.SetWillTopic(temp)
 		total += n
 		if err != nil {
 			return
 		}
-		n, err = ReadBytes(src[total:], temp)
+		temp, n, err = ReadBytes(src[total:])
 		c.SetWillMessage(temp)
 		total += n
 		if err != nil {
@@ -355,7 +378,7 @@ func (c *Connect) decodeMessage(src []byte) (total int, err error) {
 		}
 	}
 	if c.GetUsernameFlag() && len(src[total:]) > 0 {
-		n, err = ReadBytes(src[total:], temp)
+		temp, n, err = ReadBytes(src[total:])
 		c.SetUserName(temp)
 		total += n
 		if err != nil {
@@ -363,7 +386,7 @@ func (c *Connect) decodeMessage(src []byte) (total int, err error) {
 		}
 	}
 	if c.GetPasswordFlag() && len(src[total:]) > 0 {
-		n, err = ReadBytes(src[total:], temp)
+		temp, n, err = ReadBytes(src[total:])
 		c.SetPassword(temp)
 		total += n
 		if err != nil {

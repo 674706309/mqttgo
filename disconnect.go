@@ -7,8 +7,8 @@ type Disconnect struct {
 }
 
 func NewDisconnect() (p *Disconnect) {
+	p = &Disconnect{}
 	p.Header.SetType(TYPE_DISCONNECT)
-	p.Header.SetFlag(TYPE_FLAG_DISCONNECT)
 	return
 }
 func (p Disconnect) String() string {

@@ -56,8 +56,6 @@ func TestMessageHeaderDecode4(t *testing.T) {
 	buf := []byte{0x62, 0xff, 0xff, 0xff, 0x7f}
 	header := &Header{
 		TypeAndFlag: byte(6<<4 | 2),
-		//mtype:      6,
-		//flags:      2,
 	}
 
 	n, err := header.decode(buf)
@@ -97,20 +95,6 @@ func TestMessageHeaderEncode1(t *testing.T) {
 	require.Equal(t, headerBytes, buf)
 }
 
-func TestMessageHeaderEncode2(t *testing.T) {
-	header := &Header{}
-
-	err := header.SetType(TYPE_PUBREL)
-	require.NoError(t, err)
-
-	header.SetRemainingLength(268435456)
-
-	buf := make([]byte, 5)
-	_, err = header.encode(buf)
-
-	require.Error(t, err)
-}
-
 func TestMessageHeaderEncode3(t *testing.T) {
 	header := &Header{}
 	headerBytes := []byte{0x62, 0xff, 0xff, 0xff, 0x7f}
@@ -129,29 +113,3 @@ func TestMessageHeaderEncode3(t *testing.T) {
 	require.Equal(t, 5, n)
 	require.Equal(t, headerBytes, buf)
 }
-
-func TestMessageHeaderEncode4(t *testing.T) {
-	header := &Header{
-		TypeAndFlag: byte(TYPE_RESERVED2) << 4,
-		//mtype:      6,
-		//flags:      2,
-	}
-
-	buf := make([]byte, 5)
-	_, err := header.encode(buf)
-	require.Error(t, err)
-}
-
-/*
-// This test is to ensure that an empty message is at least 2 bytes long
-func TestMessageHeaderEncode5(t *testing.T) {
-	msg := NewPingreqMessage()
-
-	dst, n, err := msg.encode()
-	if err != nil {
-		t.Errorf("Error encoding PINGREQ message: %v", err)
-	} else if n != 2 {
-		t.Errorf("Incorrect result. Expecting length of 2 bytes, got %d.", dst.(*bytes.Buffer).Len())
-	}
-}
-*/

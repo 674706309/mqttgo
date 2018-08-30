@@ -11,8 +11,8 @@ type Connack struct {
 }
 
 func NewConnack() (c *Connack) {
+	c = &Connack{}
 	c.Header.SetType(TYPE_CONNACK)
-	c.Header.SetFlag(TYPE_FLAG_CONNACK)
 	c.Header.SetRemainingLength(2)
 	return
 }

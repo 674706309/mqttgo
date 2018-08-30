@@ -119,7 +119,7 @@ func (p *Publish) decode(src []byte) (total int, err error) {
 	if err != nil {
 		return
 	}
-	n, err = ReadBytes(src[total:], temp)
+	temp, n, err = ReadBytes(src[total:])
 	p.SetTopicName(temp)
 	total += n
 	if err != nil {
