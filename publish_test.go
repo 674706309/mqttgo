@@ -1,6 +1,7 @@
 package mqtt
 
 import (
+	"encoding/binary"
 	"github.com/Sirupsen/logrus"
 	"testing"
 
@@ -208,6 +209,9 @@ func TestPublishMessageEncode4(t *testing.T) {
 
 	dst := make([]byte, 1100)
 	n, err := p.Encode(dst)
+	dd := make([]byte, 2)
+	binary.PutUvarint(dd, uint64(p.Header.GetRemainingLength()))
+	logrus.Println(dd)
 	logrus.Println(p)
 	logrus.Println(msgBytes)
 	require.Equal(t, len(msgBytes), p.Length())

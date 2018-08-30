@@ -83,7 +83,15 @@ func (h *header) GetPacketID() uint16 {
 
 //获取头部长度
 func (h *header) Length() int {
-	return 2
+	var (
+		i int
+	)
+	for _, v := range h.remainingLength {
+		if v != 0 {
+			i++
+		}
+	}
+	return 1 + i
 }
 
 //头部编码
