@@ -67,6 +67,7 @@ func (s *Suback) Decode(src []byte) (total int, err error) {
 	var (
 		hl int
 	)
+
 	total = 0
 	hl, err = s.Header.decode(src[total:])
 	total += hl
@@ -76,7 +77,8 @@ func (s *Suback) Decode(src []byte) (total int, err error) {
 	s.Header.SetPacketID(binary.BigEndian.Uint16(src[total:]))
 	total += 2
 	l := int(s.Header.GetRemainingLength()) - (total - hl)
-	s.AddReturnCodes(src[total : total+l])
+	s.ReturnCode = s.ReturnCode[:0:0]
+	err = s.AddReturnCodes(src[total : total+l])
 	total += len(s.ReturnCode)
 	return
 }

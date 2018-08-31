@@ -64,7 +64,7 @@ func (u *UnSubscribe) Length() int {
 func (u *UnSubscribe) GetRemainingLength() (total int) {
 	total = 2
 	for _, t := range u.GetTopicFilter() {
-		total += 2 + len(t) + 1
+		total += 2 + len(t)
 	}
 	return
 }
@@ -118,7 +118,7 @@ func (u *UnSubscribe) Decode(src []byte) (total int, err error) {
 			return
 		}
 		u.AddTopic(temp)
-		total++
+		//total++
 		ml -= n + 1
 	}
 	if len(u.GetTopicFilter()) == 0 {

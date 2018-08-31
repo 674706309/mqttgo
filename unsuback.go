@@ -11,7 +11,7 @@ type UnSuback struct {
 
 func NewUnSuback() (u *UnSuback) {
 	u = &UnSuback{}
-	u.Header.SetType(TYPE_SUBACK)
+	u.Header.SetType(TYPE_UNSUBACK)
 	return
 }
 func (u UnSuback) String() string {
@@ -28,6 +28,7 @@ func (u *UnSuback) Encode(dst []byte) (total int, err error) {
 		n int
 	)
 	total = 0
+	u.Header.SetRemainingLength(uint64(u.GetRemainingLength()))
 	n, err = u.Header.encode(dst[total:])
 	total += n
 	if err != nil {

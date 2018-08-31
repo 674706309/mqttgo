@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"github.com/Sirupsen/logrus"
 )
 
 type Subscribe struct {
@@ -68,6 +69,9 @@ func (s *Subscribe) TopicExists(topic []byte) (int, bool) {
 func (s *Subscribe) GetTopicFilter() [][]byte {
 	return s.TopicFilter
 }
+func (s *Subscribe) AddQos(t byte) {
+	s.RequestedQoS = append(s.RequestedQoS, t)
+}
 func (s *Subscribe) GetQos() []byte {
 	return s.RequestedQoS
 }
@@ -125,7 +129,7 @@ func (s *Subscribe) Decode(src []byte) (total int, err error) {
 	}
 	s.Header.SetPacketID(binary.BigEndian.Uint16(src[total:]))
 	total += 2
-	ml = -(total - hl)
+	ml = int(s.Header.GetRemainingLength()) - (total - hl)
 	for ml > 0 {
 		temp, n, err = ReadBytes(src[total:])
 		total += n
@@ -133,6 +137,8 @@ func (s *Subscribe) Decode(src []byte) (total int, err error) {
 			return
 		}
 		s.AddTopic(temp, src[total])
+		//s.AddQos(src[total])
+		logrus.Infoln(s.GetQos())
 		total++
 		ml -= n + 1
 	}

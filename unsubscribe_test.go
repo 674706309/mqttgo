@@ -111,7 +111,7 @@ func TestUnsubscribeMessageEncode(t *testing.T) {
 // decode, encode, and decode again
 func TestUnsubscribeDecodeEncodeEquiv(t *testing.T) {
 	msgBytes := []byte{
-		byte(TYPE_UNSUBSCRIBE<<4) | 2,
+		byte(TYPE_UNSUBSCRIBE<<4&0xf0 | TYPE_FLAG_UNSUBSCRIBE&0xf),
 		33,
 		0, // packet ID MSB (0)
 		7, // packet ID LSB (7)

@@ -100,7 +100,7 @@ func TestSubackDecodeEncodeEquiv(t *testing.T) {
 		2,    // return code 3
 		0x80, // return code 4
 	}
-
+	logrus.Println(msgBytes)
 	msg := NewSuback()
 	n, err := msg.Decode(msgBytes)
 
@@ -115,8 +115,8 @@ func TestSubackDecodeEncodeEquiv(t *testing.T) {
 	require.Equal(t, len(msgBytes), n2, "Error decoding message.")
 	require.Equal(t, msgBytes, dst[:n2], "Error decoding message.")
 
-	n3, err := msg.Decode(dst)
-
+	n3, err := msg.Decode(dst[:n2])
+	logrus.Println(msg.ReturnCode)
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n3, "Error decoding message.")
 }

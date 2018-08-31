@@ -48,14 +48,14 @@ func TestSubscribeMessageDecode(t *testing.T) {
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
 	require.Equal(t, TYPE_SUBSCRIBE, msg.Header.GetType(), "Error decoding message.")
 	require.Equal(t, 3, len(msg.GetTopicFilter()), "Error decoding topics.")
-	_, found := msg.TopicExists([]byte("a/b"))
+	_, found := msg.TopicExists([]byte("surgemq"))
 	require.True(t, found, "Topic 'surgemq' should exist.")
 	//require.Equal(t, 0, int(msg.TopicQos([]byte("surgemq"))), "Incorrect topic qos.")
-	_, found = msg.TopicExists([]byte("a/b"))
+	_, found = msg.TopicExists([]byte("/a/b/#/c"))
 	require.True(t, found, "Topic '/a/b/#/c' should exist.")
 	//require.Equal(t, 1, int(msg.TopicQos([]byte("/a/b/#/c"))), "Incorrect topic qos.")
-	_, found = msg.TopicExists([]byte("a/b"))
-	require.True(t, found, "Topic '/a/b/#/c' should exist.")
+	_, found = msg.TopicExists([]byte("/a/b/#/cdd"))
+	require.True(t, found, "Topic '/a/b/#/cdd' should exist.")
 	//require.Equal(t, 2, int(msg.TopicQos([]byte("/a/b/#/cdd"))), "Incorrect topic qos.")
 }
 
