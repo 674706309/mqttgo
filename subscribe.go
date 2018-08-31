@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/Sirupsen/logrus"
 )
 
 type Subscribe struct {
 	//固定头
-	Header header
+	header
 
 	TopicFilter  [][]byte
 	RequestedQoS []byte
@@ -17,11 +16,11 @@ type Subscribe struct {
 
 func NewSubscribe() (s *Subscribe) {
 	s = &Subscribe{}
-	s.Header.SetType(TYPE_SUBSCRIBE)
+	s.header.SetType(TYPE_SUBSCRIBE)
 	return
 }
 func (s Subscribe) String() (str string) {
-	str = fmt.Sprintf("%s, Packet ID=%d", s.Header, s.Header.GetPacketID())
+	str = fmt.Sprintf("%s, Packet ID=%d", s.header, s.header.GetPacketID())
 	qos := s.GetQos()
 	for i, t := range s.GetTopicFilter() {
 		str += fmt.Sprintf(", Topic[%d]=%q/%d", i, string(t), qos[i])
@@ -76,7 +75,7 @@ func (s *Subscribe) GetQos() []byte {
 	return s.RequestedQoS
 }
 func (s *Subscribe) Length() int {
-	return s.Header.Length() + s.GetRemainingLength()
+	return s.header.Length() + s.GetRemainingLength()
 }
 func (s *Subscribe) GetRemainingLength() (total int) {
 	total = 2
@@ -95,14 +94,14 @@ func (s *Subscribe) Encode(dst []byte) (total int, err error) {
 		return 0, fmt.Errorf("Subscribe/Encode: Insufficient buffer size. Expecting %d, got %d", l, len(dst))
 	}
 	ml = s.GetRemainingLength()
-	s.Header.SetRemainingLength(uint64(ml))
+	s.header.SetRemainingLength(uint64(ml))
 	total = 0
-	n, err = s.Header.encode(dst[total:])
+	n, err = s.header.encode(dst[total:])
 	total += n
 	if err != nil {
 		return total, err
 	}
-	binary.BigEndian.PutUint16(dst[total:], s.Header.GetPacketID())
+	binary.BigEndian.PutUint16(dst[total:], s.header.GetPacketID())
 	total += n
 	qos = s.GetQos()
 	for i, t := range s.GetTopicFilter() {
@@ -122,14 +121,14 @@ func (s *Subscribe) Decode(src []byte) (total int, err error) {
 		temp      []byte
 	)
 	total = 0
-	hl, err = s.Header.decode(src[total:])
+	hl, err = s.header.decode(src[total:])
 	total += hl
 	if err != nil {
 		return
 	}
-	s.Header.SetPacketID(binary.BigEndian.Uint16(src[total:]))
+	s.header.SetPacketID(binary.BigEndian.Uint16(src[total:]))
 	total += 2
-	ml = int(s.Header.GetRemainingLength()) - (total - hl)
+	ml = int(s.header.GetRemainingLength()) - (total - hl)
 	for ml > 0 {
 		temp, n, err = ReadBytes(src[total:])
 		total += n
@@ -138,7 +137,6 @@ func (s *Subscribe) Decode(src []byte) (total int, err error) {
 		}
 		s.AddTopic(temp, src[total])
 		//s.AddQos(src[total])
-		logrus.Infoln(s.GetQos())
 		total++
 		ml -= n + 1
 	}

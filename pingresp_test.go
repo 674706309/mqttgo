@@ -12,11 +12,11 @@ func TestPingrespMessageDecode(t *testing.T) {
 	}
 
 	p := NewPingresp()
-	n, err := p.decode(msgBytes)
+	n, err := p.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, TYPE_PINGRESP, p.Header.GetType(), "Error decoding message.")
+	require.Equal(t, TYPE_PINGRESP, p.header.GetType(), "Error decoding message.")
 }
 
 func TestPingrespMessageEncode(t *testing.T) {
@@ -28,7 +28,7 @@ func TestPingrespMessageEncode(t *testing.T) {
 	p := NewPingresp()
 
 	dst := make([]byte, 10)
-	n, err := p.encode(dst)
+	n, err := p.Encode(dst)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
@@ -36,7 +36,7 @@ func TestPingrespMessageEncode(t *testing.T) {
 }
 
 // test to ensure encoding and decoding are the same
-// decode, encode, and decode again
+// Decode, Encode, and Decode again
 func TestPingrespDecodeEncodeEquiv(t *testing.T) {
 	msgBytes := []byte{
 		byte(TYPE_PINGRESP << 4),
@@ -44,19 +44,19 @@ func TestPingrespDecodeEncodeEquiv(t *testing.T) {
 	}
 
 	p := NewPingresp()
-	n, err := p.decode(msgBytes)
+	n, err := p.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
 
 	dst := make([]byte, 100)
-	n2, err := p.encode(dst)
+	n2, err := p.Encode(dst)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n2, "Error decoding message.")
 	require.Equal(t, msgBytes, dst[:n2], "Error decoding message.")
 
-	n3, err := p.decode(dst)
+	n3, err := p.Decode(dst)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n3, "Error decoding message.")

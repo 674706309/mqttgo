@@ -6,18 +6,18 @@ import (
 )
 
 type Suback struct {
-	Header header
+	header
 
 	ReturnCode []byte
 }
 
 func NewSuback() (s *Suback) {
 	s = &Suback{}
-	s.Header.SetType(TYPE_SUBACK)
+	s.header.SetType(TYPE_SUBACK)
 	return
 }
 func (s Suback) String() string {
-	return fmt.Sprintf("%s, Packet ID=%d, Return Codes=%v", s.Header, s.Header.GetPacketID(), s.GetReturnCodes())
+	return fmt.Sprintf("%s, Packet ID=%d, Return Codes=%v", s.header, s.header.GetPacketID(), s.GetReturnCodes())
 }
 func (s *Suback) GetReturnCodes() []byte {
 	return s.ReturnCode
@@ -36,7 +36,7 @@ func (s *Suback) AddReturnCode(ret byte) error {
 }
 
 func (s *Suback) Length() int {
-	return s.Header.Length() + s.GetRemainingLength()
+	return s.header.Length() + s.GetRemainingLength()
 }
 func (s *Suback) GetRemainingLength() int {
 	return 2 + len(s.ReturnCode)
@@ -50,14 +50,14 @@ func (s *Suback) Encode(dst []byte) (total int, err error) {
 		return 0, fmt.Errorf("Suback/Encode: Insufficient buffer size. Expecting %d, got %d", l, len(dst))
 	}
 	ml = s.GetRemainingLength()
-	s.Header.SetRemainingLength(uint64(ml))
+	s.header.SetRemainingLength(uint64(ml))
 	total = 0
-	n, err = s.Header.encode(dst[total:])
+	n, err = s.header.encode(dst[total:])
 	total += n
 	if err != nil {
 		return
 	}
-	binary.BigEndian.PutUint16(dst[total:], s.Header.GetPacketID())
+	binary.BigEndian.PutUint16(dst[total:], s.header.GetPacketID())
 	total += 2
 	copy(dst[total:], s.ReturnCode)
 	total += len(s.ReturnCode)
@@ -69,14 +69,14 @@ func (s *Suback) Decode(src []byte) (total int, err error) {
 	)
 
 	total = 0
-	hl, err = s.Header.decode(src[total:])
+	hl, err = s.header.decode(src[total:])
 	total += hl
 	if err != nil {
 		return
 	}
-	s.Header.SetPacketID(binary.BigEndian.Uint16(src[total:]))
+	s.header.SetPacketID(binary.BigEndian.Uint16(src[total:]))
 	total += 2
-	l := int(s.Header.GetRemainingLength()) - (total - hl)
+	l := int(s.header.GetRemainingLength()) - (total - hl)
 	s.ReturnCode = s.ReturnCode[:0:0]
 	err = s.AddReturnCodes(src[total : total+l])
 	total += len(s.ReturnCode)

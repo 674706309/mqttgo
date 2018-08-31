@@ -9,9 +9,9 @@ import (
 func TestPubcompMessageFields(t *testing.T) {
 	p := NewPubcomp()
 
-	p.Header.SetPacketID(100)
+	p.header.SetPacketID(100)
 
-	require.Equal(t, 100, int(p.Header.GetPacketID()))
+	require.Equal(t, 100, int(p.header.GetPacketID()))
 }
 
 func TestPubcompMessageDecode(t *testing.T) {
@@ -23,12 +23,12 @@ func TestPubcompMessageDecode(t *testing.T) {
 	}
 
 	p := NewPubcomp()
-	n, err := p.decode(msgBytes)
+	n, err := p.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, TYPE_PUBCOMP, p.Header.GetType(), "Error decoding message.")
-	require.Equal(t, 7, int(p.Header.GetPacketID()), "Error decoding message.")
+	require.Equal(t, TYPE_PUBCOMP, p.header.GetType(), "Error decoding message.")
+	require.Equal(t, 7, int(p.header.GetPacketID()), "Error decoding message.")
 }
 
 // test insufficient bytes
@@ -40,7 +40,7 @@ func TestPubcompMessageDecode2(t *testing.T) {
 	}
 
 	p := NewPubcomp()
-	_, err := p.decode(msgBytes)
+	_, err := p.Decode(msgBytes)
 
 	require.Error(t, err)
 }
@@ -54,10 +54,10 @@ func TestPubcompMessageEncode(t *testing.T) {
 	}
 
 	p := NewPubcomp()
-	p.Header.SetPacketID(7)
+	p.header.SetPacketID(7)
 
 	dst := make([]byte, 10)
-	n, err := p.encode(dst)
+	n, err := p.Encode(dst)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
@@ -65,7 +65,7 @@ func TestPubcompMessageEncode(t *testing.T) {
 }
 
 // test to ensure encoding and decoding are the same
-// decode, encode, and decode again
+// Decode, Encode, and Decode again
 func TestPubcompDecodeEncodeEquiv(t *testing.T) {
 	msgBytes := []byte{
 		byte(TYPE_PUBCOMP << 4),
@@ -75,19 +75,19 @@ func TestPubcompDecodeEncodeEquiv(t *testing.T) {
 	}
 
 	p := NewPubcomp()
-	n, err := p.decode(msgBytes)
+	n, err := p.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
 
 	dst := make([]byte, 100)
-	n2, err := p.encode(dst)
+	n2, err := p.Encode(dst)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n2, "Error decoding message.")
 	require.Equal(t, msgBytes, dst[:n2], "Error decoding message.")
 
-	n3, err := p.decode(dst)
+	n3, err := p.Decode(dst)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n3, "Error decoding message.")

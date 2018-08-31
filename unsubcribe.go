@@ -8,18 +8,18 @@ import (
 
 type UnSubscribe struct {
 	//固定头
-	Header header
+	header
 
 	TopicFilter [][]byte
 }
 
 func NewUnSubscribe() (u *UnSubscribe) {
 	u = &UnSubscribe{}
-	u.Header.SetType(TYPE_UNSUBSCRIBE)
+	u.header.SetType(TYPE_UNSUBSCRIBE)
 	return
 }
 func (u UnSubscribe) String() (str string) {
-	str = fmt.Sprintf("%s, Packet ID=%d", u.Header, u.Header.GetPacketID())
+	str = fmt.Sprintf("%s, Packet ID=%d", u.header, u.header.GetPacketID())
 	for i, t := range u.GetTopicFilter() {
 		str += fmt.Sprintf(", Topic[%d]=%q", i, string(t))
 	}
@@ -59,7 +59,7 @@ func (u *UnSubscribe) GetTopicFilter() [][]byte {
 	return u.TopicFilter
 }
 func (u *UnSubscribe) Length() int {
-	return u.Header.Length() + u.GetRemainingLength()
+	return u.header.Length() + u.GetRemainingLength()
 }
 func (u *UnSubscribe) GetRemainingLength() (total int) {
 	total = 2
@@ -73,19 +73,19 @@ func (u *UnSubscribe) Encode(dst []byte) (total int, err error) {
 		hl, ml, n int
 		t         []byte
 	)
-	hl = u.Header.Length()
+	hl = u.header.Length()
 	ml = u.GetRemainingLength()
 	if len(dst) < hl+ml {
 		return 0, fmt.Errorf("subscribe/Encode: Insufficient buffer size. Expecting %d, got %d", hl+ml, len(dst))
 	}
-	u.Header.SetRemainingLength(uint64(ml))
+	u.header.SetRemainingLength(uint64(ml))
 	total = 0
-	n, err = u.Header.encode(dst[total:])
+	n, err = u.header.encode(dst[total:])
 	total += n
 	if err != nil {
 		return
 	}
-	binary.BigEndian.PutUint16(dst[total:], u.Header.GetPacketID())
+	binary.BigEndian.PutUint16(dst[total:], u.header.GetPacketID())
 	total += n
 	for _, t = range u.GetTopicFilter() {
 		n, err = WriteBytes(dst[total:], t)
@@ -103,14 +103,14 @@ func (u *UnSubscribe) Decode(src []byte) (total int, err error) {
 	)
 
 	total = 0
-	hl, err = u.Header.decode(src[total:])
+	hl, err = u.header.decode(src[total:])
 	total += hl
 	if err != nil {
 		return
 	}
-	u.Header.SetPacketID(binary.BigEndian.Uint16(src[total:]))
+	u.header.SetPacketID(binary.BigEndian.Uint16(src[total:]))
 	total += 2
-	ml = int(u.Header.GetRemainingLength()) - (total - hl)
+	ml = int(u.header.GetRemainingLength()) - (total - hl)
 	for ml > 0 {
 		temp, n, err = ReadBytes(src[total:])
 		total += n

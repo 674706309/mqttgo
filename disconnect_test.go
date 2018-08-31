@@ -12,11 +12,11 @@ func TestDisconnectMessageDecode(t *testing.T) {
 	}
 
 	d := NewDisconnect()
-	n, err := d.decode(msgBytes)
+	n, err := d.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, TYPE_DISCONNECT, d.Header.GetType(), "Error decoding message.")
+	require.Equal(t, TYPE_DISCONNECT, d.header.GetType(), "Error decoding message.")
 }
 
 func TestDisconnectMessageEncode(t *testing.T) {
@@ -28,7 +28,7 @@ func TestDisconnectMessageEncode(t *testing.T) {
 	d := NewDisconnect()
 
 	dst := make([]byte, 10)
-	n, err := d.encode(dst)
+	n, err := d.Encode(dst)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
@@ -36,7 +36,7 @@ func TestDisconnectMessageEncode(t *testing.T) {
 }
 
 // test to ensure encoding and decoding are the same
-// decode, encode, and decode again
+// Decode, Encode, and Decode again
 func TestDisconnectDecodeEncodeEquiv(t *testing.T) {
 	msgBytes := []byte{
 		byte(TYPE_DISCONNECT << 4),
@@ -44,19 +44,19 @@ func TestDisconnectDecodeEncodeEquiv(t *testing.T) {
 	}
 
 	d := NewDisconnect()
-	n, err := d.decode(msgBytes)
+	n, err := d.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
 
 	dst := make([]byte, 100)
-	n2, err := d.encode(dst)
+	n2, err := d.Encode(dst)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n2, "Error decoding message.")
 	require.Equal(t, msgBytes, dst[:n2], "Error decoding message.")
 
-	n3, err := d.decode(dst)
+	n3, err := d.Decode(dst)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n3, "Error decoding message.")

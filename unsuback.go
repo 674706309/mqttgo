@@ -6,19 +6,19 @@ import (
 )
 
 type UnSuback struct {
-	Header header
+	header
 }
 
 func NewUnSuback() (u *UnSuback) {
 	u = &UnSuback{}
-	u.Header.SetType(TYPE_UNSUBACK)
+	u.header.SetType(TYPE_UNSUBACK)
 	return
 }
 func (u UnSuback) String() string {
-	return fmt.Sprintf("%s, PacketID=%d", u.Header, u.Header.GetPacketID())
+	return fmt.Sprintf("%s, PacketID=%d", u.header, u.header.GetPacketID())
 }
 func (u *UnSuback) Length() int {
-	return u.Header.Length() + u.GetRemainingLength()
+	return u.header.Length() + u.GetRemainingLength()
 }
 func (u *UnSuback) GetRemainingLength() int {
 	return 2
@@ -28,13 +28,13 @@ func (u *UnSuback) Encode(dst []byte) (total int, err error) {
 		n int
 	)
 	total = 0
-	u.Header.SetRemainingLength(uint64(u.GetRemainingLength()))
-	n, err = u.Header.encode(dst[total:])
+	u.header.SetRemainingLength(uint64(u.GetRemainingLength()))
+	n, err = u.header.encode(dst[total:])
 	total += n
 	if err != nil {
 		return
 	}
-	binary.BigEndian.PutUint16(dst[total:], u.Header.GetPacketID())
+	binary.BigEndian.PutUint16(dst[total:], u.header.GetPacketID())
 	total += n
 	return
 }
@@ -43,12 +43,12 @@ func (u *UnSuback) Decode(src []byte) (total int, err error) {
 		n int
 	)
 	total = 0
-	n, err = u.Header.decode(src[total:])
+	n, err = u.header.decode(src[total:])
 	total += n
 	if err != nil {
 		return
 	}
-	u.Header.SetPacketID(binary.BigEndian.Uint16(src[total:]))
+	u.header.SetPacketID(binary.BigEndian.Uint16(src[total:]))
 	total += 2
 	return
 }

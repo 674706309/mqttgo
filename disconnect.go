@@ -3,21 +3,21 @@ package mqtt
 import "fmt"
 
 type Disconnect struct {
-	Header header
+	header
 }
 
 func NewDisconnect() (p *Disconnect) {
 	p = &Disconnect{}
-	p.Header.SetType(TYPE_DISCONNECT)
+	p.header.SetType(TYPE_DISCONNECT)
 	return
 }
 func (p Disconnect) String() string {
-	return fmt.Sprintf("%s", p.Header)
+	return fmt.Sprintf("%s", p.header)
 }
 func (p *Disconnect) Length() int {
-	return p.Header.Length()
+	return p.header.Length()
 }
-func (p *Disconnect) encode(dst []byte) (total int, err error) {
+func (p *Disconnect) Encode(dst []byte) (total int, err error) {
 	var (
 		l, n int
 	)
@@ -26,16 +26,16 @@ func (p *Disconnect) encode(dst []byte) (total int, err error) {
 		return 0, fmt.Errorf("disconnect/Encode: Insufficient buffer size. Expecting %d, got %d", l, len(dst))
 	}
 	total = 0
-	n, err = p.Header.encode(dst[total:])
+	n, err = p.header.encode(dst[total:])
 	total += n
 	return
 }
-func (p *Disconnect) decode(src []byte) (total int, err error) {
+func (p *Disconnect) Decode(src []byte) (total int, err error) {
 	var (
 		n int
 	)
 	total = 0
-	n, err = p.Header.decode(src[total:])
+	n, err = p.header.decode(src[total:])
 	total += n
 	return
 }

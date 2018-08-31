@@ -13,11 +13,11 @@ func TestPingreqMessageDecode(t *testing.T) {
 	}
 
 	p := NewPingreq()
-	n, err := p.decode(msgBytes)
+	n, err := p.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, TYPE_PINGREQ, p.Header.GetType(), "Error decoding message.")
+	require.Equal(t, TYPE_PINGREQ, p.header.GetType(), "Error decoding message.")
 }
 
 func TestPingreqMessageEncode(t *testing.T) {
@@ -29,7 +29,7 @@ func TestPingreqMessageEncode(t *testing.T) {
 	p := NewPingreq()
 
 	dst := make([]byte, 10)
-	n, err := p.encode(dst)
+	n, err := p.Encode(dst)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
@@ -37,7 +37,7 @@ func TestPingreqMessageEncode(t *testing.T) {
 }
 
 // test to ensure encoding and decoding are the same
-// decode, encode, and decode again
+// Decode, Encode, and Decode again
 func TestPingreqDecodeEncodeEquiv(t *testing.T) {
 	msgBytes := []byte{
 		byte(TYPE_PINGREQ << 4),
@@ -45,19 +45,19 @@ func TestPingreqDecodeEncodeEquiv(t *testing.T) {
 	}
 
 	p := NewPingreq()
-	n, err := p.decode(msgBytes)
+	n, err := p.Decode(msgBytes)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
 
 	dst := make([]byte, 100)
-	n2, err := p.encode(dst)
+	n2, err := p.Encode(dst)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n2, "Error decoding message.")
 	require.Equal(t, msgBytes, dst[:n2], "Error decoding message.")
 
-	n3, err := p.decode(dst)
+	n3, err := p.Decode(dst)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n3, "Error decoding message.")

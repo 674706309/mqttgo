@@ -102,12 +102,6 @@ func (h *header) encode(dst []byte) (total int, err error) {
 	)
 	total = 0
 	l = h.GetRemainingLength()
-	//if l > uint64(MaxRemainingLength) || l < 0 {
-	//	return total, fmt.Errorf("header/Encode: Remaining length (%d) out of bound (max %d, min 0)", h.GetRemainingLength(), MaxRemainingLength)
-	//}
-	//if !ValidType(h.GetType()) {
-	//	return total, fmt.Errorf("header/Encode: Invalid message type %d", h.GetType())
-	//}
 	dst[total] = h.GetTypeAndFlag()
 	total += 1
 	n = binary.PutUvarint(dst[total:], l)
@@ -122,7 +116,7 @@ func (h *header) decode(src []byte) (total int, err error) {
 		ml uint64
 	)
 	total = 0
-	h.SetTypeAndFlag(src[total])
+	h.typeAndFlag = src[total]
 	if !ValidType(h.GetType()) {
 		return total, fmt.Errorf("header/Decode: Invalid message type %d", h.GetType())
 	}
@@ -143,9 +137,6 @@ func (h *header) decode(src []byte) (total int, err error) {
 	}
 	h.SetRemainingLength(ml)
 	total += n
-	if ml > uint64(MaxRemainingLength) || ml < 0 {
-		return total, fmt.Errorf("header/Decode: Remaining length (%d) out of bound (max %d, min 0)", ml, MaxRemainingLength)
-	}
 	if int(ml) > len(src[total:]) {
 		return total, fmt.Errorf("header/Decode: Remaining length (%d) is greater than remaining buffer (%d)", ml, len(src[total:]))
 	}

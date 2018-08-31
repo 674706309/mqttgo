@@ -2,7 +2,6 @@ package mqtt
 
 import (
 	"encoding/binary"
-	"github.com/Sirupsen/logrus"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -10,7 +9,7 @@ import (
 
 func TestPublishMessageHeaderFields(t *testing.T) {
 	p := NewPublish()
-	p.Header.SetFlag(11)
+	p.header.SetFlag(11)
 	//p.mtypeflags[0] |= 11
 
 	require.True(t, p.GetDup(), "Incorrect DUP flag.")
@@ -59,9 +58,9 @@ func TestPublishMessageFields(t *testing.T) {
 
 	require.Error(t, err)
 
-	p.Header.SetPacketID(100)
+	p.header.SetPacketID(100)
 
-	require.Equal(t, 100, int(p.Header.GetPacketID()), "Error setting acket ID.")
+	require.Equal(t, 100, int(p.header.GetPacketID()), "Error setting acket ID.")
 
 	p.SetPayload([]byte("this is a payload to be sent"))
 
@@ -85,7 +84,7 @@ func TestPublishMessageDecode1(t *testing.T) {
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, 7, int(p.Header.GetPacketID()), "Error decoding message.")
+	require.Equal(t, 7, int(p.header.GetPacketID()), "Error decoding message.")
 	require.Equal(t, "surgemq", string(p.GetTopicName()), "Error deocding topic name.")
 	require.Equal(t, []byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'}, p.GetPayload(), "Error deocding payload.")
 }
@@ -141,7 +140,7 @@ func TestPublishMessageEncode(t *testing.T) {
 	p := NewPublish()
 	p.SetTopicName([]byte("surgemq"))
 	p.SetQoS(1)
-	p.Header.SetPacketID(7)
+	p.header.SetPacketID(7)
 	p.SetPayload([]byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'})
 
 	dst := make([]byte, 100)
@@ -156,7 +155,7 @@ func TestPublishMessageEncode(t *testing.T) {
 func TestPublishMessageEncode2(t *testing.T) {
 	p := NewPublish()
 	p.SetTopicName([]byte(""))
-	p.Header.SetPacketID(7)
+	p.header.SetPacketID(7)
 	p.SetPayload([]byte{'s', 'e', 'n', 'd', ' ', 'm', 'e', ' ', 'h', 'o', 'm', 'e'})
 
 	dst := make([]byte, 100)
@@ -210,10 +209,8 @@ func TestPublishMessageEncode4(t *testing.T) {
 	dst := make([]byte, 1100)
 	n, err := p.Encode(dst)
 	dd := make([]byte, 2)
-	binary.PutUvarint(dd, uint64(p.Header.GetRemainingLength()))
-	logrus.Println(dd)
-	logrus.Println(p)
-	logrus.Println(msgBytes)
+	binary.PutUvarint(dd, uint64(p.header.GetRemainingLength()))
+
 	require.Equal(t, len(msgBytes), p.Length())
 
 	require.NoError(t, err, "Error decoding message.")

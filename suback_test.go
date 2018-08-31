@@ -1,7 +1,6 @@
 package mqtt
 
 import (
-	"github.com/Sirupsen/logrus"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -10,8 +9,8 @@ import (
 func TestSubackMessageFields(t *testing.T) {
 	msg := NewSuback()
 
-	msg.Header.SetPacketID(100)
-	require.Equal(t, 100, int(msg.Header.GetPacketID()), "Error setting packet ID.")
+	msg.header.SetPacketID(100)
+	require.Equal(t, 100, int(msg.header.GetPacketID()), "Error setting packet ID.")
 
 	msg.AddReturnCode(1)
 	require.Equal(t, 1, len(msg.GetReturnCodes()), "Error adding return code.")
@@ -37,7 +36,7 @@ func TestSubackMessageDecode(t *testing.T) {
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, TYPE_SUBACK, msg.Header.GetType(), "Error decoding message.")
+	require.Equal(t, TYPE_SUBACK, msg.header.GetType(), "Error decoding message.")
 	require.Equal(t, 4, len(msg.GetReturnCodes()), "Error adding return code.")
 }
 
@@ -73,7 +72,7 @@ func TestSubackMessageEncode(t *testing.T) {
 	}
 
 	msg := NewSuback()
-	msg.Header.SetPacketID(7)
+	msg.header.SetPacketID(7)
 	msg.AddReturnCode(0)
 	msg.AddReturnCode(1)
 	msg.AddReturnCode(2)
@@ -100,7 +99,6 @@ func TestSubackDecodeEncodeEquiv(t *testing.T) {
 		2,    // return code 3
 		0x80, // return code 4
 	}
-	logrus.Println(msgBytes)
 	msg := NewSuback()
 	n, err := msg.Decode(msgBytes)
 
@@ -109,14 +107,13 @@ func TestSubackDecodeEncodeEquiv(t *testing.T) {
 
 	dst := make([]byte, 100)
 	n2, err := msg.Encode(dst)
-	logrus.Println(dst)
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n2, "Error decoding message.")
 	require.Equal(t, msgBytes, dst[:n2], "Error decoding message.")
 
 	n3, err := msg.Decode(dst[:n2])
-	logrus.Println(msg.ReturnCode)
+
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n3, "Error decoding message.")
 }

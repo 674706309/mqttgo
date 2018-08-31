@@ -3,21 +3,21 @@ package mqtt
 import "fmt"
 
 type Pingresp struct {
-	Header header
+	header
 }
 
 func NewPingresp() (p *Pingresp) {
 	p = &Pingresp{}
-	p.Header.SetType(TYPE_PINGRESP)
+	p.header.SetType(TYPE_PINGRESP)
 	return
 }
 func (p Pingresp) String() string {
-	return fmt.Sprintf("%s", p.Header)
+	return fmt.Sprintf("%s", p.header)
 }
 func (p *Pingresp) Length() int {
-	return p.Header.Length()
+	return p.header.Length()
 }
-func (p *Pingresp) encode(dst []byte) (total int, err error) {
+func (p *Pingresp) Encode(dst []byte) (total int, err error) {
 	var (
 		l, n int
 	)
@@ -26,16 +26,16 @@ func (p *Pingresp) encode(dst []byte) (total int, err error) {
 		return 0, fmt.Errorf("Pingresp/Encode: Insufficient buffer size. Expecting %d, got %d", l, len(dst))
 	}
 	total = 0
-	n, err = p.Header.encode(dst[total:])
+	n, err = p.header.encode(dst[total:])
 	total += n
 	return
 }
-func (p *Pingresp) decode(src []byte) (total int, err error) {
+func (p *Pingresp) Decode(src []byte) (total int, err error) {
 	var (
 		n int
 	)
 	total = 0
-	n, err = p.Header.decode(src[total:])
+	n, err = p.header.decode(src[total:])
 	total += n
 	return
 }

@@ -7,50 +7,54 @@ import (
 
 type Pubcomp struct {
 	//固定头
-	Header header
+	header
 }
 
 func NewPubcomp() (p *Pubcomp) {
 	p = &Pubcomp{}
-	p.Header.SetType(TYPE_PUBCOMP)
-	p.Header.SetRemainingLength(2)
+	p.header.SetType(TYPE_PUBCOMP)
 	return
 }
 func (p Pubcomp) String() string {
-	return fmt.Sprintf("%s, PacketID=%d", p.Header, p.Header.GetPacketID())
+	return fmt.Sprintf("%s, PacketID=%d", p.header, p.header.GetPacketID())
 }
 func (p *Pubcomp) Length() int {
-	return p.Header.Length() + int(p.Header.GetRemainingLength())
+	return p.header.Length() + p.GetMessageLength()
 }
-func (p *Pubcomp) encode(dst []byte) (total int, err error) {
+func (p *Pubcomp) GetMessageLength() int {
+	return 2
+}
+func (p *Pubcomp) Encode(dst []byte) (total int, err error) {
 	var (
-		l, n int
+		ml, l, n int
 	)
 	l = p.Length()
 	if len(dst) < l {
 		return 0, fmt.Errorf("Pubcomp/Encode: Insufficient buffer size. Expecting %d, got %d", l, len(dst))
 	}
 	total = 0
-	n, err = p.Header.encode(dst[total:])
+	ml = p.GetMessageLength()
+	p.SetRemainingLength(uint64(ml))
+	n, err = p.encode(dst[total:])
 	total += n
 	if err != nil {
 		return
 	}
-	binary.BigEndian.PutUint16(dst[total:], p.Header.GetPacketID())
+	binary.BigEndian.PutUint16(dst[total:], p.GetPacketID())
 	total += 2
 	return
 }
-func (p *Pubcomp) decode(src []byte) (total int, err error) {
+func (p *Pubcomp) Decode(src []byte) (total int, err error) {
 	var (
 		n int
 	)
 	total = 0
-	n, err = p.Header.decode(src[total:])
+	n, err = p.decode(src[total:])
 	total += n
 	if err != nil {
 		return
 	}
-	p.Header.SetPacketID(binary.BigEndian.Uint16(src[total:]))
+	p.SetPacketID(binary.BigEndian.Uint16(src[total:]))
 	total += 2
 	return
 }

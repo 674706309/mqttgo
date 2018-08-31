@@ -9,8 +9,8 @@ import (
 func TestUnsubscribeMessageFields(t *testing.T) {
 	msg := NewUnSubscribe()
 
-	msg.Header.SetPacketID(100)
-	require.Equal(t, 100, int(msg.Header.GetPacketID()), "Error setting packet ID.")
+	msg.header.SetPacketID(100)
+	require.Equal(t, 100, int(msg.header.GetPacketID()), "Error setting packet ID.")
 
 	msg.AddTopic([]byte("/a/b/#/c"))
 	require.Equal(t, 1, len(msg.GetTopicFilter()), "Error adding topic.")
@@ -51,7 +51,7 @@ func TestUnsubscribeMessageDecode(t *testing.T) {
 
 	require.NoError(t, err, "Error decoding message.")
 	require.Equal(t, len(msgBytes), n, "Error decoding message.")
-	require.Equal(t, TYPE_UNSUBSCRIBE, msg.Header.GetType(), "Error decoding message.")
+	require.Equal(t, TYPE_UNSUBSCRIBE, msg.header.GetType(), "Error decoding message.")
 	require.Equal(t, 3, len(msg.GetTopicFilter()), "Error decoding topics.")
 	_, found := msg.TopicExists([]byte("/a/b/#/c"))
 	require.True(t, found, "Topic 'surgemq' should exist.")
@@ -94,7 +94,7 @@ func TestUnsubscribeMessageEncode(t *testing.T) {
 	}
 
 	msg := NewUnSubscribe()
-	msg.Header.SetPacketID(7)
+	msg.header.SetPacketID(7)
 	msg.AddTopic([]byte("surgemq"))
 	msg.AddTopic([]byte("/a/b/#/c"))
 	msg.AddTopic([]byte("/a/b/#/cdd"))
